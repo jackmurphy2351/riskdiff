@@ -2,10 +2,24 @@ Package: riskdiff
 Title: What the Package Does (One Line, Title Case)
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+    person("John", "Murphy", , "jackmurphy2351@gmail.com", role = c("aut", "cre"))
+Description: The `riskdiff` package provides robust methods for calculating risk differences (also known as prevalence differences in cross-sectional studies) using generalized linear models. The package automatically selects appropriate link functions and provides publication-ready output.
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+Suggests: 
+    kableExtra,
+    knitr,
+    rmarkdown,
+    testthat
+Config/testthat/edition: 3
+Imports: 
+    dplyr (>= 1.0.0),
+    purrr,
+    rlang,
+    scales,
+    stringr,
+    tibble
+URL: https://github.com/jackmurphy2351/riskdiff
+BugReports: https://github.com/jackmurphy2351/riskdiff/issues
