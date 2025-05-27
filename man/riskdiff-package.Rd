@@ -12,7 +12,6 @@ Calculates risk differences (or prevalence differences for cross-sectional data)
 Useful links:
 \itemize{
   \item \url{https://github.com/jackmurphy2351/riskdiff}
-  \item \url{https://jackmurphy2351.github.io/riskdiff/}
   \item Report bugs at \url{https://github.com/jackmurphy2351/riskdiff/issues}
 }
 

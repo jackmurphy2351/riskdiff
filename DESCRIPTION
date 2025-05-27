@@ -34,6 +34,6 @@ Suggests:
     covr
 Config/testthat/edition: 3
 VignetteBuilder: knitr
-URL: https://github.com/jackmurphy2351/riskdiff, https://jackmurphy2351.github.io/riskdiff/
+URL: https://github.com/jackmurphy2351/riskdiff
 BugReports: https://github.com/jackmurphy2351/riskdiff/issues
 LazyData: true
