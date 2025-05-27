@@ -11,7 +11,7 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 [![Codecov test
 coverage](https://codecov.io/gh/jackmurphy2351/riskdiff/branch/main/graph/badge.svg)](https://app.codecov.io/gh/jackmurphy2351/riskdiff?branch=main)
 [![CRAN
-status](https://www.r-pkg.org/badges/version/riskdiff)](https://CRAN.R-project.org/package=riskdiff)
+Submission](https://img.shields.io/badge/CRAN-Submitted-yellow.svg)](https://cran.r-project.org/package=riskdiff)
 
 <!-- badges: end -->
 
