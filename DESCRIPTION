@@ -1,25 +1,38 @@
 Package: riskdiff
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: Robust Risk Difference Estimation with Multiple Link Functions
+Version: 0.1.0
 Authors@R: 
-    person("John", "Murphy", , "jackmurphy2351@gmail.com", role = c("aut", "cre"))
-Description: The `riskdiff` package provides robust methods for calculating risk differences (also known as prevalence differences in cross-sectional studies) using generalized linear models. The package automatically selects appropriate link functions and provides publication-ready output.
+    person("John D.", "Murphy", , "jackmurphy2351@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-7714-9976", "MPH, PhD"))
+Description: Calculates risk differences (or prevalence differences for 
+    cross-sectional data) using generalized linear models with automatic 
+    link function selection. Provides robust model fitting with fallback 
+    methods, support for stratification and adjustment variables, and 
+    publication-ready output formatting. Handles model convergence issues
+    gracefully and provides confidence intervals using multiple approaches.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Suggests: 
-    kableExtra,
-    knitr,
-    rmarkdown,
-    testthat
-Config/testthat/edition: 3
+Depends: 
+    R (>= 3.5.0)
 Imports: 
     dplyr (>= 1.0.0),
     purrr,
+    tibble,
     rlang,
     scales,
     stringr,
-    tibble
-URL: https://github.com/jackmurphy2351/riskdiff
+    stats
+Suggests: 
+    kableExtra,
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown,
+    ggplot2,
+    covr
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+URL: https://github.com/jackmurphy2351/riskdiff, https://jackmurphy2351.github.io/riskdiff/
 BugReports: https://github.com/jackmurphy2351/riskdiff/issues
+LazyData: true

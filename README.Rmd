@@ -1,0 +1,219 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# riskdiff <img src="man/figures/logo.png" align="right" height="139"/>
+
+<!-- badges: start -->
+
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental) [![R-CMD-check](https://github.com/jackmurphy2351/riskdiff/workflows/R-CMD-check/badge.svg)](https://github.com/jackmurphy2351/riskdiff/actions) [![Codecov test coverage](https://codecov.io/gh/jackmurphy2351/riskdiff/branch/main/graph/badge.svg)](https://app.codecov.io/gh/jackmurphy2351/riskdiff?branch=main) [![CRAN status](https://www.r-pkg.org/badges/version/riskdiff)](https://CRAN.R-project.org/package=riskdiff)
+
+<!-- badges: end -->
+
+The **riskdiff** package provides robust methods for calculating risk differences (also known as prevalence differences in cross-sectional studies) using generalized linear models with automatic link function selection.
+
+## Features
+
+-   **🔧 Robust model fitting**: Automatically tries identity, log, and logit links with graceful fallback
+-   **📊 Stratified analysis**: Support for multi-level stratification
+-   **📋 Publication-ready output**: Formatted tables and confidence intervals
+-   **🛡️ Missing data handling**: Graceful handling of incomplete cases
+-   **⚙️ Flexible confidence intervals**: Support for different confidence levels
+-   **📈 Multiple link functions**: Automatic selection or manual specification
+
+## Author
+
+**John D. Murphy, MPH, PhD**
+ORCID: [0000-0002-7714-9976](https://orcid.org/0000-0002-7714-9976)
+
+## Installation
+
+You can install the development version of riskdiff from [GitHub](https://github.com/) with:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("jackmurphy2351/riskdiff")
+```
+
+## Quick Start
+
+```{r example}
+library(riskdiff)
+
+# Load example data
+data(birthweight)
+
+# Simple risk difference
+result <- calc_risk_diff(
+  data = birthweight,
+  outcome = "low_birthweight",
+  exposure = "smoking"
+)
+
+print(result)
+```
+
+## Key Functions
+
+### Basic Usage
+
+```{r basic}
+# Age-adjusted risk difference
+rd_adjusted <- calc_risk_diff(
+  data = birthweight,
+  outcome = "low_birthweight", 
+  exposure = "smoking",
+  adjust_vars = "maternal_age"
+)
+
+print(rd_adjusted)
+```
+
+### Stratified Analysis
+
+```{r stratified}
+# Stratified by race
+rd_stratified <- calc_risk_diff(
+  data = birthweight,
+  outcome = "low_birthweight",
+  exposure = "smoking",
+  adjust_vars = "maternal_age",
+  strata = "race"
+)
+
+print(rd_stratified)
+```
+
+### Table Creation
+
+```{r tables}
+# Create a simple text table
+cat(create_simple_table(rd_stratified, "Risk by Smoking Status and Race"))
+```
+
+```{r tables-kable, eval=FALSE}
+# Create publication-ready table (requires kableExtra)
+library(kableExtra)
+create_rd_table(rd_stratified, caption = "Risk of Low Birth Weight by Smoking Status")
+```
+
+## Methodology
+
+The package uses generalized linear models with different link functions:
+
+1.  **Identity link** (preferred): Directly estimates risk differences
+2.  **Log link**: Estimates relative risks, transforms to risk differences\
+3.  **Logit link**: Estimates odds ratios, transforms to risk differences
+
+When the identity link fails to converge (common with binary outcomes), the package automatically tries alternative approaches.
+
+## Advanced Features
+
+### Link Function Selection
+
+```{r links}
+# Force a specific link function
+rd_logit <- calc_risk_diff(
+  birthweight, 
+  "low_birthweight", 
+  "smoking",
+  link = "logit"
+)
+
+# Check which model was used
+rd_logit$model_type
+```
+
+### Confidence Intervals
+
+```{r confidence}
+# 90% confidence intervals
+rd_90 <- calc_risk_diff(
+  birthweight,
+  "low_birthweight", 
+  "smoking",
+  alpha = 0.10  # 1 - 0.10 = 90% CI
+)
+
+print(rd_90)
+```
+
+### Multiple Stratification
+
+```{r multi-strata}
+# Stratify by multiple variables
+rd_multi <- calc_risk_diff(
+  data = birthweight,
+  outcome = "low_birthweight",
+  exposure = "smoking", 
+  strata = c("race", "education")
+)
+
+# Show first few results
+head(rd_multi)
+```
+
+## Example Dataset
+
+The package includes a simulated birth weight dataset with realistic associations:
+
+```{r dataset}
+data(birthweight)
+str(birthweight)
+
+# Summary statistics
+table(birthweight$smoking, birthweight$low_birthweight)
+```
+
+## When to Use Risk Differences
+
+Risk differences are particularly useful when:
+
+-   You want to communicate **absolute** rather than relative effects
+-   The outcome is relatively common (\>10%)
+-   You're doing **causal inference** or policy analysis
+-   You need results that are easily interpretable by non-statisticians
+
+## Comparison with Other Measures
+
+| Measure | Interpretation | Best When |
+|-------------------|-------------------------------|-----------------------|
+| **Risk Difference** | Absolute change in risk | Outcome common, policy decisions |
+| Risk Ratio | Relative change in risk | Outcome rare, etiologic research |
+| Odds Ratio | Change in odds | Case-control studies, rare outcomes |
+
+## Getting Help
+
+-   📖 **Vignettes**: `browseVignettes("riskdiff")`
+-   🐛 **Bug reports**: [GitHub Issues](https://github.com/jackmurphy2351/riskdiff/issues)
+-   💡 **Feature requests**: [GitHub Issues](https://github.com/jackmurphy2351/riskdiff/issues)
+
+## Citation
+
+If you use this package in your research, please cite:
+
+``` r
+citation("riskdiff")
+```
+
+## Related Packages
+
+-   **epitools**: Basic epidemiological calculations
+-   **epi**: Extended epidemiological functions\
+-   **fmsb**: Medical statistics and epidemiology
+-   **Epi**: Statistical analysis in epidemiology
+
+## Code of Conduct
+
+Please note that the riskdiff project is released with a [Contributor Code of Conduct](https://contributor-covenant.org/version/2/1/CODE_OF_CONDUCT.html). By contributing to this project, you agree to abide by its terms.
