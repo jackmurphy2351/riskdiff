@@ -1,6 +1,7 @@
 Package: riskdiff
 Title: Robust Risk Difference Estimation with Multiple Link Functions
 Version: 0.1.0
+Date: 2025-05-26
 Authors@R: 
     person("John D.", "Murphy", , "jackmurphy2351@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-7714-9976", "MPH, PhD"))
