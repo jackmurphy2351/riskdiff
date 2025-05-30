@@ -35,8 +35,17 @@ jobs:
             install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
           )
           print(cov)
+          # Generate cobertura XML file
           covr::to_cobertura(cov)
+          # Also try direct upload as backup
+          covr::codecov(
+            coverage = cov,
+            quiet = FALSE,
+            token = Sys.getenv("CODECOV_TOKEN")
+          )
         shell: Rscript {0}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - uses: codecov/codecov-action@v5
         with:
