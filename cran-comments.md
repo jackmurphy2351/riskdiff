@@ -1,26 +1,42 @@
 ## Resubmission
 
-This is a resubmission. In this version I have:
+This is a resubmission addressing the feedback received on 2025-05-29.
 
-* Removed VignetteBuilder field from DESCRIPTION as no vignettes are included
-* Updated URL field to point to working GitHub repository
-* Added Date field to DESCRIPTION for proper package citation
-* Fixed failing unit tests
+### Changes made in response to CRAN feedback:
+
+1. **Added references to DESCRIPTION**: Added proper citations for methodological foundations:
+   - Donoghoe & Marschner (2018) <doi:10.18637/jss.v086.i09> for robust GLM fitting methods
+   - Rothman, Greenland & Lash (2008, ISBN:9780781755641) for epidemiological methods
+
+2. **Added missing \value documentation**: 
+   - Added comprehensive \value section to print.riskdiff_result.Rd explaining return structure and side effects
+
+3. **Fixed \dontrun{} usage**:
+   - Replaced \dontrun{} with \donttest{} in create_rd_table.Rd as the examples are executable but require optional dependency (kableExtra)
+
+4. **Enhanced documentation**:
+   - Expanded statistical methodology descriptions
+   - Added detailed return value documentation across functions
+   - Improved examples with clearer explanations
 
 ## Test environments
-* Local: R 4.3.0 on macOS
-* R-hub builder
-* win-builder (devel and release)
+
+* local R installation: R 4.4.0 on macOS
+* ubuntu-latest (on GitHub Actions): R-release, R-devel
+* windows-latest (on GitHub Actions): R-release
+* macOS-latest (on GitHub Actions): R-release
 
 ## R CMD check results
 
-0 errors | 0 warnings | 1 note
-
-* There is one NOTE about 'unable to verify current time' which appears to be a 
-  system/network issue during the build process and does not affect package 
-  functionality.
+0 errors | 0 warnings | 0 notes
 
 ## Downstream dependencies
 
-There are currently no downstream dependencies for this package.
+This is a new package, so there are no downstream dependencies to check.
 
+## Additional notes
+
+* All examples run successfully in < 5 seconds
+* Package builds cleanly on all test platforms
+* Test coverage remains > 90%
+* No breaking changes to API
