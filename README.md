@@ -13,6 +13,8 @@ coverage](https://codecov.io/gh/jackmurphy2351/riskdiff/branch/main/graph/badge.
 [![CRAN
 Submission](https://img.shields.io/badge/CRAN-Submitted-yellow.svg)](https://cran.r-project.org/package=riskdiff)
 [![R-CMD-check](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml)
+[![Codecov test
+coverage](https://codecov.io/gh/jackmurphy2351/riskdiff/graph/badge.svg)](https://app.codecov.io/gh/jackmurphy2351/riskdiff)
 
 <!-- badges: end -->
 
