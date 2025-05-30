@@ -25,7 +25,6 @@
 #' basic_table <- create_rd_table(results, caption = "Risk of Low Birth Weight")
 #' print(basic_table)
 #'
-#' \donttest{
 #' # Enhanced table (requires kableExtra)
 #' if (requireNamespace("kableExtra", quietly = TRUE)) {
 #'   enhanced_table <- create_rd_table(
@@ -34,7 +33,6 @@
 #'     include_model_type = TRUE
 #'   )
 #'   print(enhanced_table)
-#' }
 #' }
 #'
 #' @export

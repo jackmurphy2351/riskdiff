@@ -7,10 +7,22 @@
 \method{print}{riskdiff_result}(x, ...)
 }
 \arguments{
-\item{x}{A riskdiff_result object}
+\item{x}{A riskdiff_result object from calc_risk_diff()}
 
-\item{...}{Additional arguments passed to print}
+\item{...}{Additional arguments passed to print methods}
+}
+\value{
+Invisibly returns the original riskdiff_result object (x). Called primarily
+for its side effect of printing formatted results to the console.
 }
 \description{
-Print method for riskdiff_result objects
+Prints risk difference results in a formatted, readable way showing
+key statistics including risk differences, confidence intervals, and
+model types used.
+}
+\examples{
+data(birthweight)
+result <- calc_risk_diff(birthweight, "low_birthweight", "smoking")
+print(result)
+
 }

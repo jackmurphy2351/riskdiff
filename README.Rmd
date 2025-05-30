@@ -17,10 +17,7 @@ knitr::opts_chunk$set(
 
 <!-- badges: start -->
 
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![R-CMD-check](https://github.com/jackmurphy2351/riskdiff/workflows/R-CMD-check/badge.svg)](https://github.com/jackmurphy2351/riskdiff/actions)
-[![Codecov test coverage](https://codecov.io/gh/jackmurphy2351/riskdiff/branch/main/graph/badge.svg)](https://app.codecov.io/gh/jackmurphy2351/riskdiff?branch=main)
-[![CRAN Submission](https://img.shields.io/badge/CRAN-Submitted-yellow.svg)](https://cran.r-project.org/package=riskdiff)
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental) [![R-CMD-check](https://github.com/jackmurphy2351/riskdiff/workflows/R-CMD-check/badge.svg)](https://github.com/jackmurphy2351/riskdiff/actions) [![Codecov test coverage](https://codecov.io/gh/jackmurphy2351/riskdiff/branch/main/graph/badge.svg)](https://app.codecov.io/gh/jackmurphy2351/riskdiff?branch=main) [![CRAN Submission](https://img.shields.io/badge/CRAN-Submitted-yellow.svg)](https://cran.r-project.org/package=riskdiff) [![R-CMD-check](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml)
 
 <!-- badges: end -->
 
@@ -37,8 +34,7 @@ The **riskdiff** package provides robust methods for calculating risk difference
 
 ## Author
 
-**John D. Murphy, MPH, PhD**
-ORCID: [0000-0002-7714-9976](https://orcid.org/0000-0002-7714-9976)
+**John D. Murphy, MPH, PhD** ORCID: [0000-0002-7714-9976](https://orcid.org/0000-0002-7714-9976)
 
 ## Installation
 
@@ -191,7 +187,7 @@ Risk differences are particularly useful when:
 ## Comparison with Other Measures
 
 | Measure | Interpretation | Best When |
-|-------------------|-------------------------------|-----------------------|
+|----|----|----|
 | **Risk Difference** | Absolute change in risk | Outcome common, policy decisions |
 | Risk Ratio | Relative change in risk | Outcome rare, etiologic research |
 | Odds Ratio | Change in odds | Case-control studies, rare outcomes |

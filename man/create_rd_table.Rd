@@ -21,17 +21,33 @@ create_rd_table(
 \item{...}{Additional arguments passed to kableExtra::kable()}
 }
 \value{
-A kable table object (if kableExtra available) or formatted tibble
+If kableExtra is available, returns a kable table object suitable for
+rendering in R Markdown or HTML. The table includes formatted risk differences,
+confidence intervals, and p-values with appropriate styling and footnotes.
+If kableExtra is not available, returns a formatted tibble with the same
+information in a basic data frame structure.
 }
 \description{
 Creates a publication-ready table of risk difference results with
-appropriate grouping and formatting.
+appropriate grouping and formatting. Requires the kableExtra package
+for full functionality.
 }
 \examples{
 data(birthweight)
 results <- calc_risk_diff(birthweight, "low_birthweight", "smoking")
-\dontrun{
-table <- create_rd_table(results, caption = "Risk of Low Birth Weight by Smoking")
+
+# Basic table (works without kableExtra)
+basic_table <- create_rd_table(results, caption = "Risk of Low Birth Weight")
+print(basic_table)
+
+# Enhanced table (requires kableExtra)
+if (requireNamespace("kableExtra", quietly = TRUE)) {
+  enhanced_table <- create_rd_table(
+    results,
+    caption = "Risk of Low Birth Weight by Smoking Status",
+    include_model_type = TRUE
+  )
+  print(enhanced_table)
 }
 
 }
