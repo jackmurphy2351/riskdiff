@@ -1,7 +1,7 @@
 Package: riskdiff
 Title: Robust Risk Difference Estimation with Multiple Link Functions
 Version: 0.1.0
-Date: 2025-05-26
+Date: 2025-05-29
 Authors@R: 
     person("John D.", "Murphy", , "jackmurphy2351@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-7714-9976", "MPH, PhD"))
@@ -11,11 +11,13 @@ Description: Calculates risk differences (or prevalence differences for
     methods, support for stratification and adjustment variables, and 
     publication-ready output formatting. Handles model convergence issues
     gracefully and provides confidence intervals using multiple approaches.
-    Methods are based on approaches described in Donoghoe & Marschner (2018)
-    "logbin: An R Package for Relative Risk Regression Using the Log-Binomial Model"
-    <doi:10.18637/jss.v086.i09> for robust GLM fitting, and standard 
-    epidemiological methods for risk difference estimation as described in 
-    Rothman, Greenland & Lash (2008, ISBN:9780781755641) "Modern Epidemiology".
+    Methods are based on approaches described in Mark W. Donoghoe and 
+    Ian C. Marschner (2018) "logbin: An R Package for Relative Risk 
+    Regression Using the Log-Binomial Model" <doi:10.18637/jss.v086.i09> 
+    for robust GLM fitting, and standard epidemiological methods for risk 
+    difference estimation as described in Kenneth J. Rothman, Sander 
+    Greenland and Timothy L. Lash (2008, ISBN:9780781755641) "Modern 
+    Epidemiology".
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

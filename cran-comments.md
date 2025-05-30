@@ -21,10 +21,10 @@ This is a resubmission addressing the feedback received on 2025-05-29.
 
 ## Test environments
 
-* local R installation: R 4.4.0 on macOS
-* ubuntu-latest (on GitHub Actions): R-release, R-devel
-* windows-latest (on GitHub Actions): R-release
-* macOS-latest (on GitHub Actions): R-release
+* local R installation: R 4.5.0 on macOS  
+* GitHub Actions (ubuntu-latest): R-release, R-devel
+* GitHub Actions (windows-latest): R-release  
+* GitHub Actions (macOS-latest): R-release
 
 ## R CMD check results
 

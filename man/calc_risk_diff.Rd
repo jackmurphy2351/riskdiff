@@ -73,7 +73,7 @@ The function attempts to fit models in the following order:
 \subsection{Convergence Strategy}{
 
 Identity link models for binary outcomes often fail to converge due to
-parameter constraints (fitted probabilities must be ≤ 1). This package
+parameter constraints (fitted probabilities must be \\le{} 1). This package
 implements robust starting values and automatic fallback to alternative
 link functions when convergence fails, ensuring reliable estimation.
 }

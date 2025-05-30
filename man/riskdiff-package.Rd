@@ -6,7 +6,9 @@
 \alias{riskdiff-package}
 \title{riskdiff: Robust Risk Difference Estimation with Multiple Link Functions}
 \description{
-Calculates risk differences (or prevalence differences for cross-sectional data) using generalized linear models with automatic link function selection. Provides robust model fitting with fallback methods, support for stratification and adjustment variables, and publication-ready output formatting. Handles model convergence issues gracefully and provides confidence intervals using multiple approaches. Methods are based on approaches described in Donoghoe & Marschner (2018) "logbin: An R Package for Relative Risk Regression Using the Log-Binomial Model" \doi{10.18637/jss.v086.i09} for robust GLM fitting, and standard epidemiological methods for risk difference estimation as described in Rothman, Greenland & Lash (2008, ISBN:9780781755641) "Modern Epidemiology".
+\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
+
+Calculates risk differences (or prevalence differences for cross-sectional data) using generalized linear models with automatic link function selection. Provides robust model fitting with fallback methods, support for stratification and adjustment variables, and publication-ready output formatting. Handles model convergence issues gracefully and provides confidence intervals using multiple approaches. Methods are based on approaches described in Mark W. Donoghoe and Ian C. Marschner (2018) "logbin: An R Package for Relative Risk Regression Using the Log-Binomial Model" \doi{10.18637/jss.v086.i09} for robust GLM fitting, and standard epidemiological methods for risk difference estimation as described in Kenneth J. Rothman, Sander Greenland and Timothy L. Lash (2008, ISBN:9780781755641) "Modern Epidemiology".
 }
 \seealso{
 Useful links:
