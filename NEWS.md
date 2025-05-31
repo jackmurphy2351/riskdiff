@@ -1,3 +1,5 @@
+# riskdiff 0.2.0
+
 # riskdiff 0.1.0
 
 ## Initial CRAN Release
