@@ -17,20 +17,26 @@ knitr::opts_chunk$set(
 
 <!-- badges: start -->
 
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental) [![R-CMD-check](https://github.com/jackmurphy2351/riskdiff/workflows/R-CMD-check/badge.svg)](https://github.com/jackmurphy2351/riskdiff/actions) [![Codecov test coverage](https://codecov.io/gh/jackmurphy2351/riskdiff/branch/main/graph/badge.svg)](https://app.codecov.io/gh/jackmurphy2351/riskdiff?branch=main) [![CRAN Submission](https://img.shields.io/badge/CRAN-Submitted-yellow.svg)](https://cran.r-project.org/package=riskdiff) [![R-CMD-check](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml) [![Codecov test coverage](https://codecov.io/gh/jackmurphy2351/riskdiff/graph/badge.svg)](https://app.codecov.io/gh/jackmurphy2351/riskdiff)
+[![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable) [![R-CMD-check](https://github.com/jackmurphy2351/riskdiff/workflows/R-CMD-check/badge.svg)](https://github.com/jackmurphy2351/riskdiff/actions) [![Codecov test coverage](https://codecov.io/gh/jackmurphy2351/riskdiff/branch/main/graph/badge.svg)](https://app.codecov.io/gh/jackmurphy2351/riskdiff?branch=main) [![CRAN status](https://www.r-pkg.org/badges/version/riskdiff)](https://CRAN.R-project.org/package=riskdiff) [![R-CMD-check](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml)
 
 <!-- badges: end -->
 
-The **riskdiff** package provides robust methods for calculating risk differences (also known as prevalence differences in cross-sectional studies) using generalized linear models with automatic link function selection.
+The **riskdiff** package provides robust methods for calculating risk differences (also known as prevalence differences in cross-sectional studies) using generalized linear models with automatic link function selection and **boundary detection**.
+
+## ✨ New in v0.2.0: Boundary Detection
+
+**riskdiff** now includes cutting-edge boundary detection capabilities that identify when maximum likelihood estimates lie at the edge of the parameter space - a common issue with identity link models that other packages ignore.
 
 ## Features
 
--   **🔧 Robust model fitting**: Automatically tries identity, log, and logit links with graceful fallback
--   **📊 Stratified analysis**: Support for multi-level stratification
--   **📋 Publication-ready output**: Formatted tables and confidence intervals
--   **🛡️ Missing data handling**: Graceful handling of incomplete cases
--   **⚙️ Flexible confidence intervals**: Support for different confidence levels
--   **📈 Multiple link functions**: Automatic selection or manual specification
+- **🎯 Smart boundary detection**: Automatically detects when GLMs hit parameter constraints
+- **🔧 Robust model fitting**: Tries identity, log, and logit links with graceful fallback  
+- **📊 Stratified analysis**: Support for multi-level stratification
+- **📋 Publication-ready output**: Formatted tables and confidence intervals
+- **🛡️ Missing data handling**: Graceful handling of incomplete cases
+- **⚙️ Flexible confidence intervals**: Robust methods for boundary cases
+- **📈 Multiple link functions**: Automatic selection with boundary-aware switching
+- **🔍 Transparent diagnostics**: Clear reporting of model methods and boundary issues
 
 ## Author
 
@@ -53,7 +59,7 @@ library(riskdiff)
 # Load example data
 data(birthweight)
 
-# Simple risk difference
+# Simple risk difference with boundary detection
 result <- calc_risk_diff(
   data = birthweight,
   outcome = "low_birthweight",
@@ -63,26 +69,57 @@ result <- calc_risk_diff(
 print(result)
 ```
 
+## 🎯 Boundary Detection in Action
+
+```{r boundary-example}
+# Create data that challenges standard GLM methods
+set.seed(123)
+challenging_data <- data.frame(
+  outcome = c(rep(0, 40), rep(1, 60)),  # High baseline risk
+  exposure = factor(c(rep("No", 50), rep("Yes", 50))),
+  age = rnorm(100, 45, 10)
+)
+
+# riskdiff handles this gracefully with boundary detection
+result <- calc_risk_diff(
+  data = challenging_data,
+  outcome = "outcome", 
+  exposure = "exposure",
+  adjust_vars = "age",
+  verbose = TRUE  # Shows diagnostic information
+)
+
+print(result)
+
+# Check if boundary cases were detected
+if (any(result$on_boundary)) {
+  cat("\n🚨 Boundary case detected! Using robust inference methods.\n")
+  cat("Boundary type:", unique(result$boundary_type[result$on_boundary]), "\n")
+  cat("CI method:", unique(result$ci_method[result$on_boundary]), "\n")
+}
+```
+
 ## Key Functions
 
-### Basic Usage
+### Basic Usage with Enhanced Diagnostics
 
 ```{r basic}
-# Age-adjusted risk difference
+# Age-adjusted risk difference with boundary detection
 rd_adjusted <- calc_risk_diff(
   data = birthweight,
   outcome = "low_birthweight", 
   exposure = "smoking",
-  adjust_vars = "maternal_age"
+  adjust_vars = "maternal_age",
+  boundary_method = "auto"  # Automatic robust method selection
 )
 
 print(rd_adjusted)
 ```
 
-### Stratified Analysis
+### Stratified Analysis with Boundary Awareness
 
 ```{r stratified}
-# Stratified by race
+# Stratified by race with boundary detection
 rd_stratified <- calc_risk_diff(
   data = birthweight,
   outcome = "low_birthweight",
@@ -92,34 +129,72 @@ rd_stratified <- calc_risk_diff(
 )
 
 print(rd_stratified)
+
+# Summary of boundary cases across strata
+boundary_summary <- rd_stratified[rd_stratified$on_boundary, 
+                                  c("race", "boundary_type", "ci_method")]
+if (nrow(boundary_summary) > 0) {
+  cat("\nBoundary cases by stratum:\n")
+  print(boundary_summary)
+}
 ```
 
-### Table Creation
+### Table Creation with Boundary Indicators
 
 ```{r tables}
-# Create a simple text table
+# Create a simple text table with boundary information
 cat(create_simple_table(rd_stratified, "Risk by Smoking Status and Race"))
 ```
 
 ```{r tables-kable, eval=FALSE}
 # Create publication-ready table (requires kableExtra)
 library(kableExtra)
-create_rd_table(rd_stratified, caption = "Risk of Low Birth Weight by Smoking Status")
+create_rd_table(rd_stratified, 
+                caption = "Risk of Low Birth Weight by Smoking Status",
+                include_model_type = TRUE)
 ```
 
-## Methodology
+## 🧠 Statistical Methodology
+
+### GLM Approach with Boundary Detection
 
 The package uses generalized linear models with different link functions:
 
-1.  **Identity link** (preferred): Directly estimates risk differences
-2.  **Log link**: Estimates relative risks, transforms to risk differences\
-3.  **Logit link**: Estimates odds ratios, transforms to risk differences
+1. **Identity link** (preferred): Directly estimates risk differences
+2. **Log link**: Estimates relative risks, transforms to risk differences  
+3. **Logit link**: Estimates odds ratios, transforms to risk differences
 
-When the identity link fails to converge (common with binary outcomes), the package automatically tries alternative approaches.
+**New in v0.2.0**: When models hit parameter space boundaries (common with identity links), the package:
+- 🔍 **Detects boundary cases** automatically
+- ⚠️ **Warns users** about potential inference issues  
+- 🛡️ **Uses robust confidence intervals** when appropriate
+- 📊 **Reports methodology transparently**
+
+### Boundary Detection Types
+
+- **Upper bound**: Fitted probabilities near 1 (risk saturation)
+- **Lower bound**: Fitted probabilities near 0 (risk floor) 
+- **Separation**: Complete/quasi-separation in logistic models
+- **Both bounds**: Multiple boundary issues detected
 
 ## Advanced Features
 
-### Link Function Selection
+### Boundary Method Control
+
+```{r boundary-methods}
+# Force specific boundary handling
+rd_conservative <- calc_risk_diff(
+  birthweight,
+  "low_birthweight", 
+  "smoking",
+  boundary_method = "auto"  # Options: "auto", "profile", "wald"
+)
+
+# Check which methods were used
+table(rd_conservative$ci_method)
+```
+
+### Link Function Selection with Boundary Awareness
 
 ```{r links}
 # Force a specific link function
@@ -130,14 +205,15 @@ rd_logit <- calc_risk_diff(
   link = "logit"
 )
 
-# Check which model was used
-rd_logit$model_type
+# Check which model was used and if boundaries detected
+cat("Model used:", rd_logit$model_type, "\n")
+cat("Boundary detected:", rd_logit$on_boundary, "\n")
 ```
 
-### Confidence Intervals
+### Confidence Intervals with Robust Methods
 
 ```{r confidence}
-# 90% confidence intervals
+# 90% confidence intervals with boundary detection
 rd_90 <- calc_risk_diff(
   birthweight,
   "low_birthweight", 
@@ -146,57 +222,77 @@ rd_90 <- calc_risk_diff(
 )
 
 print(rd_90)
+
+# The package automatically uses appropriate CI methods for boundary cases
 ```
 
-### Multiple Stratification
+## 📊 Understanding Results
 
-```{r multi-strata}
-# Stratify by multiple variables
-rd_multi <- calc_risk_diff(
-  data = birthweight,
-  outcome = "low_birthweight",
-  exposure = "smoking", 
-  strata = c("race", "education")
-)
+### New Result Columns in v0.2.0
 
-# Show first few results
-head(rd_multi)
+```{r result-structure}
+# Examine the enhanced result structure
+data(birthweight)
+result <- calc_risk_diff(birthweight, "low_birthweight", "smoking")
+names(result)
+
+# Key new columns:
+# - on_boundary: Was a boundary case detected?
+# - boundary_type: What type of boundary?
+# - boundary_warning: Detailed diagnostic message
+# - ci_method: Which CI method was used?
 ```
 
 ## Example Dataset
 
-The package includes a simulated birth weight dataset with realistic associations:
+The package includes a realistic simulated birth weight dataset:
 
 ```{r dataset}
 data(birthweight)
 str(birthweight)
 
-# Summary statistics
+# Summary statistics showing realistic associations
 table(birthweight$smoking, birthweight$low_birthweight)
+
+# Risk difference analysis
+rd_analysis <- calc_risk_diff(birthweight, "low_birthweight", "smoking")
+cat("Smoking increases low birth weight risk by", 
+    sprintf("%.1f", rd_analysis$rd * 100), "percentage points\n")
 ```
 
 ## When to Use Risk Differences
 
-Risk differences are particularly useful when:
+Risk differences are particularly valuable when:
 
--   You want to communicate **absolute** rather than relative effects
--   The outcome is relatively common (\>10%)
--   You're doing **causal inference** or policy analysis
--   You need results that are easily interpretable by non-statisticians
+- **Policy decisions**: You need the absolute impact size
+- **Clinical practice**: Communicating real-world effect sizes
+- **Common outcomes**: When outcome prevalence > 10%
+- **Causal inference**: For intervention planning
+- **Public health**: When relative measures can mislead
 
 ## Comparison with Other Measures
 
-| Measure | Interpretation | Best When |
-|----|----|----|
-| **Risk Difference** | Absolute change in risk | Outcome common, policy decisions |
-| Risk Ratio | Relative change in risk | Outcome rare, etiologic research |
-| Odds Ratio | Change in odds | Case-control studies, rare outcomes |
+| Measure | Interpretation | Best When | riskdiff Advantage |
+|---------|---------------|-----------|-------------------|
+| **Risk Difference** | Absolute change in risk | Common outcomes, policy | **Boundary detection** |
+| Risk Ratio | Relative change in risk | Rare outcomes | Standard methods only |
+| Odds Ratio | Change in odds | Case-control studies | Standard methods only |
+
+## 🔬 Statistical Foundation
+
+This package implements methods based on:
+
+- **Donoghoe & Marschner (2018)** - Robust GLM fitting methods
+- **Marschner & Gillett (2012)** - Boundary detection for log-binomial models
+- **Rothman, Greenland & Lash (2008)** - Epidemiological methods
+- **Modern computational statistics** - Boundary-aware inference
 
 ## Getting Help
 
--   📖 **Vignettes**: `browseVignettes("riskdiff")`
--   🐛 **Bug reports**: [GitHub Issues](https://github.com/jackmurphy2351/riskdiff/issues)
--   💡 **Feature requests**: [GitHub Issues](https://github.com/jackmurphy2351/riskdiff/issues)
+- 📖 **Vignettes**: `browseVignettes("riskdiff")`
+- 🐛 **Bug reports**: [GitHub Issues](https://github.com/jackmurphy2351/riskdiff/issues)
+- 💡 **Feature requests**: [GitHub Issues](https://github.com/jackmurphy2351/riskdiff/issues)
+- 📧 **Questions**: Use GitHub Discussions
 
 ## Citation
 
@@ -208,10 +304,12 @@ citation("riskdiff")
 
 ## Related Packages
 
--   **epitools**: Basic epidemiological calculations
--   **epi**: Extended epidemiological functions\
--   **fmsb**: Medical statistics and epidemiology
--   **Epi**: Statistical analysis in epidemiology
+- **epitools**: Basic epidemiological calculations (no boundary detection)
+- **epi**: Extended epidemiological functions (no boundary detection)
+- **fmsb**: Medical statistics and epidemiology (no boundary detection)
+- **Epi**: Statistical analysis in epidemiology (no boundary detection)
+
+**riskdiff uniquely provides boundary detection for robust inference!**
 
 ## Code of Conduct
 

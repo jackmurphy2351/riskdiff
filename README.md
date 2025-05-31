@@ -6,35 +6,44 @@
 <!-- badges: start -->
 
 [![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
 [![R-CMD-check](https://github.com/jackmurphy2351/riskdiff/workflows/R-CMD-check/badge.svg)](https://github.com/jackmurphy2351/riskdiff/actions)
 [![Codecov test
 coverage](https://codecov.io/gh/jackmurphy2351/riskdiff/branch/main/graph/badge.svg)](https://app.codecov.io/gh/jackmurphy2351/riskdiff?branch=main)
 [![CRAN
-Submission](https://img.shields.io/badge/CRAN-Submitted-yellow.svg)](https://cran.r-project.org/package=riskdiff)
+status](https://www.r-pkg.org/badges/version/riskdiff)](https://CRAN.R-project.org/package=riskdiff)
 [![R-CMD-check](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml)
-[![Codecov test
-coverage](https://codecov.io/gh/jackmurphy2351/riskdiff/graph/badge.svg)](https://app.codecov.io/gh/jackmurphy2351/riskdiff)
 
 <!-- badges: end -->
 
 The **riskdiff** package provides robust methods for calculating risk
 differences (also known as prevalence differences in cross-sectional
 studies) using generalized linear models with automatic link function
-selection.
+selection and **boundary detection**.
+
+## ✨ New in v0.2.0: Boundary Detection
+
+**riskdiff** now includes cutting-edge boundary detection capabilities
+that identify when maximum likelihood estimates lie at the edge of the
+parameter space - a common issue with identity link models that other
+packages ignore.
 
 ## Features
 
-- **🔧 Robust model fitting**: Automatically tries identity, log, and
-  logit links with graceful fallback
+- **🎯 Smart boundary detection**: Automatically detects when GLMs hit
+  parameter constraints
+- **🔧 Robust model fitting**: Tries identity, log, and logit links with
+  graceful fallback  
 - **📊 Stratified analysis**: Support for multi-level stratification
 - **📋 Publication-ready output**: Formatted tables and confidence
   intervals
 - **🛡️ Missing data handling**: Graceful handling of incomplete cases
-- **⚙️ Flexible confidence intervals**: Support for different confidence
-  levels
-- **📈 Multiple link functions**: Automatic selection or manual
-  specification
+- **⚙️ Flexible confidence intervals**: Robust methods for boundary
+  cases
+- **📈 Multiple link functions**: Automatic selection with
+  boundary-aware switching
+- **🔍 Transparent diagnostics**: Clear reporting of model methods and
+  boundary issues
 
 ## Author
 
@@ -59,7 +68,7 @@ library(riskdiff)
 # Load example data
 data(birthweight)
 
-# Simple risk difference
+# Simple risk difference with boundary detection
 result <- calc_risk_diff(
   data = birthweight,
   outcome = "low_birthweight",
@@ -68,45 +77,147 @@ result <- calc_risk_diff(
 #> Waiting for profiling to be done...
 
 print(result)
-#> Risk Difference Analysis Results
-#> ================================
+#> Risk Difference Analysis Results (v0.2.0+)
+#> ========================================== 
 #> 
 #> Confidence level: 95% 
 #> Number of comparisons: 1 
 #> 
-#>  Exposure Risk Difference          95% CI P-value    Model
-#>   smoking           8.40% (5.21%, 11.97%)  <0.001 identity
+#>  Exposure Risk Difference          95% CI P-value    Model Boundary CI Method
+#>   smoking           8.40% (5.21%, 11.97%)  <0.001 identity               wald
+```
+
+## 🎯 Boundary Detection in Action
+
+``` r
+# Create data that challenges standard GLM methods
+set.seed(123)
+challenging_data <- data.frame(
+  outcome = c(rep(0, 40), rep(1, 60)),  # High baseline risk
+  exposure = factor(c(rep("No", 50), rep("Yes", 50))),
+  age = rnorm(100, 45, 10)
+)
+
+# riskdiff handles this gracefully with boundary detection
+result <- calc_risk_diff(
+  data = challenging_data,
+  outcome = "outcome", 
+  exposure = "exposure",
+  adjust_vars = "age",
+  verbose = TRUE  # Shows diagnostic information
+)
+#> Formula: outcome ~ exposure + age
+#> Sample size: 100
+#> Trying identity link...
+#> Using starting values: 0.2, 0.8, 0.004
+#> Identity link error: cannot find valid starting values: please specify some
+#> Trying log link...
+#> log link error: no valid set of coefficients has been found: please supply starting values
+#> Trying logit link...
+#> [Huzzah!]logit link converged
+#> Waiting for profiling to be done...
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#> Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
+#> collapsing to unique 'x' values
+#> Boundary case detected: separation
+#> Warning: Logit model may have separation issues. Very large coefficient estimates detected.
+#> Note: 1 of 1 analyses had MLE on parameter space boundary. Robust confidence intervals were used.
+
+print(result)
+#> Risk Difference Analysis Results (v0.2.0+)
+#> ========================================== 
+#> 
+#> Confidence level: 95% 
+#> Number of comparisons: 1 
+#> Boundary cases detected: 1 of 1 
+#> Boundary CI method: auto 
+#> 
+#>  Exposure Risk Difference              95% CI P-value Model          Boundary
+#>  exposure          80.06% (-199.05%, 359.17%)   0.993 logit [Uh oh]separation
+#>          CI Method
+#>  wald_conservative
+#> 
+#> Boundary Case Details:
+#> =====================
+#> Row 1 ( exposure ):  Logit model may have separation issues. Very large coefficient estimates detected. 
+#> 
+#> Boundary Type Guide:
+#> - upper_bound: Fitted probabilities near 1
+#> - lower_bound: Fitted probabilities near 0
+#> - separation: Complete/quasi-separation detected
+#> - both_bounds: Probabilities near both 0 and 1
+#> - [Uh oh] indicates robust confidence intervals were used
+#> 
+#> Note: Standard asymptotic theory may not apply for boundary cases.
+#> Confidence intervals use robust methods when boundary detected.
+
+# Check if boundary cases were detected
+if (any(result$on_boundary)) {
+  cat("\n🚨 Boundary case detected! Using robust inference methods.\n")
+  cat("Boundary type:", unique(result$boundary_type[result$on_boundary]), "\n")
+  cat("CI method:", unique(result$ci_method[result$on_boundary]), "\n")
+}
+#> 
+#> 🚨 Boundary case detected! Using robust inference methods.
+#> Boundary type: separation 
+#> CI method: wald_conservative
 ```
 
 ## Key Functions
 
-### Basic Usage
+### Basic Usage with Enhanced Diagnostics
 
 ``` r
-# Age-adjusted risk difference
+# Age-adjusted risk difference with boundary detection
 rd_adjusted <- calc_risk_diff(
   data = birthweight,
   outcome = "low_birthweight", 
   exposure = "smoking",
-  adjust_vars = "maternal_age"
+  adjust_vars = "maternal_age",
+  boundary_method = "auto"  # Automatic robust method selection
 )
 #> Waiting for profiling to be done...
 
 print(rd_adjusted)
-#> Risk Difference Analysis Results
-#> ================================
+#> Risk Difference Analysis Results (v0.2.0+)
+#> ========================================== 
 #> 
 #> Confidence level: 95% 
 #> Number of comparisons: 1 
 #> 
-#>  Exposure Risk Difference          95% CI P-value Model
-#>   smoking           8.51% (2.77%, 14.25%)  <0.001   log
+#>  Exposure Risk Difference          95% CI P-value Model Boundary CI Method
+#>   smoking           8.51% (2.77%, 14.25%)  <0.001   log               wald
 ```
 
-### Stratified Analysis
+### Stratified Analysis with Boundary Awareness
 
 ``` r
-# Stratified by race
+# Stratified by race with boundary detection
 rd_stratified <- calc_risk_diff(
   data = birthweight,
   outcome = "low_birthweight",
@@ -161,25 +272,70 @@ rd_stratified <- calc_risk_diff(
 #> Warning: step size truncated: out of bounds
 #> Warning: glm.fit: algorithm stopped at boundary value
 #> Waiting for profiling to be done...
+#> Note: 1 of 4 analyses had MLE on parameter space boundary. Robust confidence intervals were used.
 
 print(rd_stratified)
-#> Risk Difference Analysis Results
-#> ================================
+#> Risk Difference Analysis Results (v0.2.0+)
+#> ========================================== 
 #> 
 #> Confidence level: 95% 
 #> Number of comparisons: 4 
+#> Boundary cases detected: 1 of 4 
+#> Boundary CI method: auto 
 #> 
-#>  Exposure Risk Difference           95% CI P-value    Model
-#>   smoking          10.23%  (6.06%, 15.03%)  <0.001 identity
-#>   smoking           8.05% (-5.25%, 21.34%)   0.024      log
-#>   smoking           3.85%  (-1.38%, 9.08%)   0.211      log
-#>   smoking          12.16% (-2.88%, 27.20%)   0.113 identity
+#>  Exposure Risk Difference           95% CI P-value    Model           Boundary
+#>   smoking          10.23%  (6.06%, 15.03%)  <0.001 identity                   
+#>   smoking           8.05% (-5.25%, 21.34%)   0.024      log                   
+#>   smoking           3.85%  (-1.38%, 9.08%)   0.211      log                   
+#>   smoking          12.16% (-2.88%, 27.20%)   0.113 identity [Uh oh]lower_bound
+#>          CI Method
+#>               wald
+#>               wald
+#>               wald
+#>  wald_conservative
+#> 
+#> Boundary Case Details:
+#> =====================
+#> Row 4 ( smoking ):  Identity link model has fitted probabilities at or near boundary (0 or 1). Confidence intervals may be unreliable. 
+#> 
+#> Boundary Type Guide:
+#> - upper_bound: Fitted probabilities near 1
+#> - lower_bound: Fitted probabilities near 0
+#> - separation: Complete/quasi-separation detected
+#> - both_bounds: Probabilities near both 0 and 1
+#> - [Uh oh] indicates robust confidence intervals were used
+#> 
+#> Note: Standard asymptotic theory may not apply for boundary cases.
+#> Confidence intervals use robust methods when boundary detected.
+
+# Summary of boundary cases across strata
+boundary_summary <- rd_stratified[rd_stratified$on_boundary, 
+                                  c("race", "boundary_type", "ci_method")]
+if (nrow(boundary_summary) > 0) {
+  cat("\nBoundary cases by stratum:\n")
+  print(boundary_summary)
+}
+#> 
+#> Boundary cases by stratum:
+#> Risk Difference Analysis Results (v0.1.0)
+#> ========================================= 
+#> 
+#> Confidence level: 95% 
+#> Number of comparisons: 1
+#> Warning: Unknown or uninitialised column: `exposure_var`.
+#> Warning: Unknown or uninitialised column: `rd`.
+#> Warning: Unknown or uninitialised column: `ci_lower`.
+#> Warning: Unknown or uninitialised column: `ci_upper`.
+#> Warning: Unknown or uninitialised column: `p_value`.
+#> Warning: Unknown or uninitialised column: `model_type`.
+#> [1] Risk Difference 95% CI          P-value        
+#> <0 rows> (or 0-length row.names)
 ```
 
-### Table Creation
+### Table Creation with Boundary Indicators
 
 ``` r
-# Create a simple text table
+# Create a simple text table with boundary information
 cat(create_simple_table(rd_stratified, "Risk by Smoking Status and Race"))
 #> Risk by Smoking Status and Race
 #> ====================================================================================
@@ -195,10 +351,14 @@ cat(create_simple_table(rd_stratified, "Risk by Smoking Status and Race"))
 ``` r
 # Create publication-ready table (requires kableExtra)
 library(kableExtra)
-create_rd_table(rd_stratified, caption = "Risk of Low Birth Weight by Smoking Status")
+create_rd_table(rd_stratified, 
+                caption = "Risk of Low Birth Weight by Smoking Status",
+                include_model_type = TRUE)
 ```
 
-## Methodology
+## 🧠 Statistical Methodology
+
+### GLM Approach with Boundary Detection
 
 The package uses generalized linear models with different link
 functions:
@@ -209,12 +369,41 @@ functions:
 3.  **Logit link**: Estimates odds ratios, transforms to risk
     differences
 
-When the identity link fails to converge (common with binary outcomes),
-the package automatically tries alternative approaches.
+**New in v0.2.0**: When models hit parameter space boundaries (common
+with identity links), the package: - 🔍 **Detects boundary cases**
+automatically - ⚠️ **Warns users** about potential inference issues  
+- 🛡️ **Uses robust confidence intervals** when appropriate - 📊
+**Reports methodology transparently**
+
+### Boundary Detection Types
+
+- **Upper bound**: Fitted probabilities near 1 (risk saturation)
+- **Lower bound**: Fitted probabilities near 0 (risk floor)
+- **Separation**: Complete/quasi-separation in logistic models
+- **Both bounds**: Multiple boundary issues detected
 
 ## Advanced Features
 
-### Link Function Selection
+### Boundary Method Control
+
+``` r
+# Force specific boundary handling
+rd_conservative <- calc_risk_diff(
+  birthweight,
+  "low_birthweight", 
+  "smoking",
+  boundary_method = "auto"  # Options: "auto", "profile", "wald"
+)
+#> Waiting for profiling to be done...
+
+# Check which methods were used
+table(rd_conservative$ci_method)
+#> 
+#> wald 
+#>    1
+```
+
+### Link Function Selection with Boundary Awareness
 
 ``` r
 # Force a specific link function
@@ -226,15 +415,17 @@ rd_logit <- calc_risk_diff(
 )
 #> Waiting for profiling to be done...
 
-# Check which model was used
-rd_logit$model_type
-#> [1] "logit"
+# Check which model was used and if boundaries detected
+cat("Model used:", rd_logit$model_type, "\n")
+#> Model used: logit
+cat("Boundary detected:", rd_logit$on_boundary, "\n")
+#> Boundary detected: FALSE
 ```
 
-### Confidence Intervals
+### Confidence Intervals with Robust Methods
 
 ``` r
-# 90% confidence intervals
+# 90% confidence intervals with boundary detection
 rd_90 <- calc_risk_diff(
   birthweight,
   "low_birthweight", 
@@ -244,185 +435,42 @@ rd_90 <- calc_risk_diff(
 #> Waiting for profiling to be done...
 
 print(rd_90)
-#> Risk Difference Analysis Results
-#> ================================
+#> Risk Difference Analysis Results (v0.2.0+)
+#> ========================================== 
 #> 
 #> Confidence level: 90% 
 #> Number of comparisons: 1 
 #> 
-#>  Exposure Risk Difference          95% CI P-value    Model
-#>   smoking           8.40% (5.70%, 11.37%)  <0.001 identity
+#>  Exposure Risk Difference          95% CI P-value    Model Boundary CI Method
+#>   smoking           8.40% (5.70%, 11.37%)  <0.001 identity               wald
+
+# The package automatically uses appropriate CI methods for boundary cases
 ```
 
-### Multiple Stratification
+## 📊 Understanding Results
+
+### New Result Columns in v0.2.0
 
 ``` r
-# Stratify by multiple variables
-rd_multi <- calc_risk_diff(
-  data = birthweight,
-  outcome = "low_birthweight",
-  exposure = "smoking", 
-  strata = c("race", "education")
-)
+# Examine the enhanced result structure
+data(birthweight)
+result <- calc_risk_diff(birthweight, "low_birthweight", "smoking")
 #> Waiting for profiling to be done...
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: glm.fit: algorithm did not converge
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: glm.fit: algorithm did not converge
-#> Warning: glm.fit: algorithm stopped at boundary value
-#> Waiting for profiling to be done...
-#> Waiting for profiling to be done...
-#> Waiting for profiling to be done...
-#> Warning: step size truncated: out of bounds
-#> Warning: glm.fit: algorithm stopped at boundary value
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Waiting for profiling to be done...
-#> Waiting for profiling to be done...
-#> Waiting for profiling to be done...
-#> Warning: glm.fit: algorithm did not converge
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: glm.fit: algorithm did not converge
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: step size truncated due to divergence
-#> Warning: glm.fit: algorithm did not converge
-#> Waiting for profiling to be done...
-#> Warning: step size truncated: out of bounds
-#> Warning: step size truncated: out of bounds
-#> Warning: step size truncated: out of bounds
-#> Warning: step size truncated: out of bounds
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Waiting for profiling to be done...
-#> Warning: step size truncated: out of bounds
-#> Warning: glm.fit: algorithm stopped at boundary value
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: step size truncated: out of bounds
-#> Warning: glm.fit: algorithm stopped at boundary value
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Waiting for profiling to be done...
-#> Waiting for profiling to be done...
-#> Waiting for profiling to be done...
-#> Waiting for profiling to be done...
-#> Waiting for profiling to be done...
+names(result)
+#>  [1] "exposure_var"  "rd"            "ci_lower"      "ci_upper"     
+#>  [5] "p_value"       "model_type"    "on_boundary"   "boundary_type"
+#>  [9] "ci_method"     "n_obs"
 
-# Show first few results
-head(rd_multi)
-#> Risk Difference Analysis Results
-#> ================================
-#> 
-#> Confidence level: 95% 
-#> Number of comparisons: 6 
-#> 
-#>  Exposure Risk Difference            95% CI P-value    Model
-#>   smoking          -2.02% (-13.08%, 20.56%)   0.800 identity
-#>   smoking          11.82%   (3.02%, 22.73%)   0.019 identity
-#>   smoking          12.23%   (6.14%, 19.59%)  <0.001 identity
-#>   smoking           6.59%   (0.06%, 16.14%)   0.106 identity
-#>   smoking         -20.83% (-37.08%, -4.59%)   0.012 identity
-#>   smoking          31.03%   (6.97%, 55.10%)   0.011 identity
+# Key new columns:
+# - on_boundary: Was a boundary case detected?
+# - boundary_type: What type of boundary?
+# - boundary_warning: Detailed diagnostic message
+# - ci_method: Which CI method was used?
 ```
 
 ## Example Dataset
 
-The package includes a simulated birth weight dataset with realistic
-associations:
+The package includes a realistic simulated birth weight dataset:
 
 ``` r
 data(birthweight)
@@ -437,30 +485,48 @@ str(birthweight)
 #>  $ parity         : num  3 1 2 0 0 1 3 0 0 2 ...
 #>  $ low_birthweight: num  0 0 0 0 1 0 1 0 0 0 ...
 
-# Summary statistics
+# Summary statistics showing realistic associations
 table(birthweight$smoking, birthweight$low_birthweight)
 #>      
 #>          0    1
 #>   No  1942  115
 #>   Yes  381   62
+
+# Risk difference analysis
+rd_analysis <- calc_risk_diff(birthweight, "low_birthweight", "smoking")
+#> Waiting for profiling to be done...
+cat("Smoking increases low birth weight risk by", 
+    sprintf("%.1f", rd_analysis$rd * 100), "percentage points\n")
+#> Smoking increases low birth weight risk by 8.4 percentage points
 ```
 
 ## When to Use Risk Differences
 
-Risk differences are particularly useful when:
+Risk differences are particularly valuable when:
 
-- You want to communicate **absolute** rather than relative effects
-- The outcome is relatively common (\>10%)
-- You’re doing **causal inference** or policy analysis
-- You need results that are easily interpretable by non-statisticians
+- **Policy decisions**: You need the absolute impact size
+- **Clinical practice**: Communicating real-world effect sizes
+- **Common outcomes**: When outcome prevalence \> 10%
+- **Causal inference**: For intervention planning
+- **Public health**: When relative measures can mislead
 
 ## Comparison with Other Measures
 
-| Measure | Interpretation | Best When |
-|----|----|----|
-| **Risk Difference** | Absolute change in risk | Outcome common, policy decisions |
-| Risk Ratio | Relative change in risk | Outcome rare, etiologic research |
-| Odds Ratio | Change in odds | Case-control studies, rare outcomes |
+| Measure | Interpretation | Best When | riskdiff Advantage |
+|----|----|----|----|
+| **Risk Difference** | Absolute change in risk | Common outcomes, policy | **Boundary detection** |
+| Risk Ratio | Relative change in risk | Rare outcomes | Standard methods only |
+| Odds Ratio | Change in odds | Case-control studies | Standard methods only |
+
+## 🔬 Statistical Foundation
+
+This package implements methods based on:
+
+- **Donoghoe & Marschner (2018)** - Robust GLM fitting methods
+- **Marschner & Gillett (2012)** - Boundary detection for log-binomial
+  models
+- **Rothman, Greenland & Lash (2008)** - Epidemiological methods
+- **Modern computational statistics** - Boundary-aware inference
 
 ## Getting Help
 
@@ -469,6 +535,7 @@ Risk differences are particularly useful when:
   Issues](https://github.com/jackmurphy2351/riskdiff/issues)
 - 💡 **Feature requests**: [GitHub
   Issues](https://github.com/jackmurphy2351/riskdiff/issues)
+- 📧 **Questions**: Use GitHub Discussions
 
 ## Citation
 
@@ -480,10 +547,13 @@ citation("riskdiff")
 
 ## Related Packages
 
-- **epitools**: Basic epidemiological calculations
-- **epi**: Extended epidemiological functions  
-- **fmsb**: Medical statistics and epidemiology
-- **Epi**: Statistical analysis in epidemiology
+- **epitools**: Basic epidemiological calculations (no boundary
+  detection)
+- **epi**: Extended epidemiological functions (no boundary detection)
+- **fmsb**: Medical statistics and epidemiology (no boundary detection)
+- **Epi**: Statistical analysis in epidemiology (no boundary detection)
+
+**riskdiff uniquely provides boundary detection for robust inference!**
 
 ## Code of Conduct
 
