@@ -96,7 +96,7 @@
 #' )
 #'
 #' @export
-calc_risk_diff_v2 <- function(data,
+calc_risk_diff <- function(data,
                               outcome,
                               exposure,
                               adjust_vars = NULL,
@@ -134,7 +134,7 @@ calc_risk_diff_v2 <- function(data,
 
   # Analyze each stratum with enhanced boundary detection
   results <- purrr::map2_dfr(groups, group_labels, function(group_data, group_label) {
-    .analyze_stratum_v2(
+    .analyze_stratum(
       data = group_data,
       outcome = outcome,
       exposure = exposure,
@@ -165,62 +165,8 @@ calc_risk_diff_v2 <- function(data,
   return(results)
 }
 
-# Enhanced stratum analysis with boundary detection
-.analyze_stratum_v2 <- function(data, outcome, exposure, adjust_vars,
-                                strata, group_label, link, alpha,
-                                boundary_method, verbose) {
-
-  # Same initial checks as before
-  if (nrow(data) < 20) {
-    if (verbose) {
-      message("Insufficient data in stratum (n=", nrow(data), "). Skipping.")
-    }
-    return(.create_insufficient_result_v2(exposure, group_label, strata))
-  }
-
-  if (length(unique(data[[outcome]])) < 2) {
-    if (verbose) {
-      message("No variation in outcome in this stratum. Skipping.")
-    }
-    return(.create_insufficient_result_v2(exposure, group_label, strata))
-  }
-
-  # Build formula (same as before)
-  formula <- .build_formula(outcome, exposure, adjust_vars)
-
-  if (verbose) {
-    message("Formula: ", deparse(formula))
-    message("Sample size: ", nrow(data))
-  }
-
-  # Fit model (same as before)
-  model_result <- .fit_robust_glm(formula, data, link, verbose)
-
-  if (is.null(model_result$model)) {
-    if (verbose) {
-      message("Model fitting failed in stratum")
-    }
-    return(.create_failed_result_v2(exposure, group_label, strata))
-  }
-
-  # Calculate effects with boundary detection
-  result <- .calculate_main_effect_v2(model_result, data, exposure, alpha,
-                                      boundary_method, verbose)
-
-  # Add sample size and stratification info (same as before)
-  result$n_obs <- nrow(data)
-
-  if (!is.null(strata) && !is.null(group_label)) {
-    for (i in seq_along(strata)) {
-      result[[strata[i]]] <- group_label[[i]]
-    }
-  }
-
-  return(result)
-}
-
 # Enhanced effect calculation with boundary detection
-.calculate_main_effect_v2 <- function(model_result, data, exposure, alpha,
+.calculate_main_effect <- function(model_result, data, exposure, alpha,
                                       boundary_method, verbose) {
 
   model <- model_result$model
@@ -299,54 +245,6 @@ calc_risk_diff_v2 <- function(data,
   )
 }
 
-# Enhanced result creation functions with boundary info
-.create_insufficient_result_v2 <- function(exposure, group_label, strata) {
-  result <- tibble::tibble(
-    exposure_var = exposure,
-    rd = NA_real_,
-    ci_lower = NA_real_,
-    ci_upper = NA_real_,
-    p_value = NA_real_,
-    model_type = "insufficient_data",
-    n_obs = 0L,
-    on_boundary = FALSE,
-    boundary_type = "none",
-    boundary_warning = NULL,
-    ci_method = "none"
-  )
-
-  if (!is.null(strata) && !is.null(group_label)) {
-    for (i in seq_along(strata)) {
-      result[[strata[i]]] <- group_label[[i]]
-    }
-  }
-
-  return(result)
-}
-
-.create_failed_result_v2 <- function(exposure, group_label, strata) {
-  result <- tibble::tibble(
-    exposure_var = exposure,
-    rd = NA_real_,
-    ci_lower = NA_real_,
-    ci_upper = NA_real_,
-    p_value = NA_real_,
-    model_type = "failed",
-    n_obs = 0L,
-    on_boundary = FALSE,
-    boundary_type = "none",
-    boundary_warning = NULL,
-    ci_method = "none"
-  )
-
-  if (!is.null(strata) && !is.null(group_label)) {
-    for (i in seq_along(strata)) {
-      result[[strata[i]]] <- group_label[[i]]
-    }
-  }
-
-  return(result)
-}
 
 #' Format Risk Difference Results for Display
 #'
@@ -455,7 +353,7 @@ print.riskdiff_result <- function(x, show_boundary = TRUE, ...) {
   if (has_boundary_info && show_boundary) {
     # Add boundary indicator column
     display_data$Boundary <- ifelse(x$on_boundary,
-                                    paste0("⚠ ", x$boundary_type),
+                                    paste0("[Uh oh]", x$boundary_type),
                                     "")
 
     # Add CI method column if available
@@ -494,7 +392,7 @@ print.riskdiff_result <- function(x, show_boundary = TRUE, ...) {
       cat("- lower_bound: Fitted probabilities near 0\n")
       cat("- separation: Complete/quasi-separation detected\n")
       cat("- both_bounds: Probabilities near both 0 and 1\n")
-      cat("- ⚠ indicates robust confidence intervals were used\n")
+      cat("- [Uh oh] indicates robust confidence intervals were used\n")
 
       # Add methodological note
       cat("\nNote: Standard asymptotic theory may not apply for boundary cases.\n")

@@ -2,7 +2,7 @@
 % Please edit documentation in R/calc_risk_diff.R
 \name{calc_risk_diff}
 \alias{calc_risk_diff}
-\title{Calculate Risk Differences with Robust Model Fitting}
+\title{Calculate Risk Differences with Robust Model Fitting and Boundary Detection}
 \usage{
 calc_risk_diff(
   data,
@@ -12,13 +12,14 @@ calc_risk_diff(
   strata = NULL,
   link = "auto",
   alpha = 0.05,
+  boundary_method = "auto",
   verbose = FALSE
 )
 }
 \arguments{
 \item{data}{A data frame containing all necessary variables}
 
-\item{outcome}{Character string naming the binary outcome variable (must be 0/1 or logical)}
+\item{outcome}{Character string naming the binary outcome variable}
 
 \item{exposure}{Character string naming the exposure variable of interest}
 
@@ -26,100 +27,103 @@ calc_risk_diff(
 
 \item{strata}{Character vector of stratification variables (default: NULL)}
 
-\item{link}{Character string specifying link function: "auto", "identity", "log", or "logit" (default: "auto")}
+\item{link}{Character string specifying link function preference}
 
 \item{alpha}{Significance level for confidence intervals (default: 0.05)}
 
-\item{verbose}{Logical indicating whether to print diagnostic messages (default: FALSE)}
+\item{boundary_method}{Method for boundary case CIs: "auto", "profile", "bootstrap" (default: "auto")}
+
+\item{verbose}{Logical indicating whether to print diagnostic messages}
 }
 \value{
-A tibble of class "riskdiff_result" containing the following columns:
+A tibble of class "riskdiff_result" with additional boundary information:
 \describe{
-\item{exposure_var}{Character. Name of exposure variable analyzed}
-\item{rd}{Numeric. Risk difference estimate (proportion scale, e.g. 0.05 = 5 percentage points)}
-\item{ci_lower}{Numeric. Lower bound of confidence interval}
-\item{ci_upper}{Numeric. Upper bound of confidence interval}
-\item{p_value}{Numeric. P-value for test of null hypothesis (risk difference = 0)}
-\item{model_type}{Character. Link function successfully used ("identity", "log", "logit", or error type)}
-\item{n_obs}{Integer. Number of observations used in analysis}
-\item{...}{Additional columns for stratification variables if specified}
+\item{exposure_var}{Character. Name of exposure variable}
+\item{rd}{Numeric. Risk difference estimate}
+\item{ci_lower}{Numeric. Lower confidence interval bound}
+\item{ci_upper}{Numeric. Upper confidence interval bound}
+\item{p_value}{Numeric. P-value for test of RD = 0}
+\item{model_type}{Character. Link function used}
+\item{n_obs}{Integer. Number of observations}
+\item{on_boundary}{Logical. TRUE if MLE is on parameter space boundary}
+\item{boundary_type}{Character. Type of boundary: "none", "upper_bound", "lower_bound", "separation"}
+\item{boundary_warning}{Character. Warning message for boundary cases (if any)}
+\item{ci_method}{Character. Method used for confidence intervals}
 }
-
-The returned object has attributes including the original function call and
-alpha level used. Risk differences are on the probability scale where 0.05
-represents a 5 percentage point difference.
 }
 \description{
-Calculates risk differences (or prevalence differences for cross-sectional data)
-using generalized linear models with identity, log, or logit links. Includes
-support for stratification, adjustment variables, and robust model fitting.
-
-The function addresses common convergence issues with identity link binomial
-GLMs by implementing a fallback strategy across multiple link functions,
-similar to approaches described in Donoghoe & Marschner (2018) for relative
-risk regression.
+Calculates risk differences with enhanced boundary detection and robust
+confidence interval methods. Version 0.2.0 adds explicit detection of
+boundary cases where the MLE lies at the edge of the parameter space,
+providing more reliable inference in these situations.
 }
 \details{
-\subsection{Statistical Approach}{
+\subsection{New in Version 0.2.0: Boundary Detection}{
 
-The function attempts to fit models in the following order:
-\enumerate{
-\item \strong{Identity link}: Directly estimates risk differences using a binomial GLM with identity link
-\item \strong{Log link}: Estimates relative risks, then transforms to risk differences via prediction
-\item \strong{Logit link}: Estimates odds ratios, then transforms to risk differences via prediction
+This version adds explicit detection of boundary cases where the maximum
+likelihood estimate lies at the edge of the valid parameter space. This
+commonly occurs with:
+\itemize{
+\item \strong{Identity link models}: When fitted probabilities approach 0 or 1
+\item \strong{Log link models}: When fitted probabilities approach 1
+\item \strong{Logit link models}: When complete or quasi-separation occurs
 }
 }
 
-\subsection{Convergence Strategy}{
+\subsection{Statistical Theory}{
 
-Identity link models for binary outcomes often fail to converge due to
-parameter constraints (fitted probabilities must be \\le{} 1). This package
-implements robust starting values and automatic fallback to alternative
-link functions when convergence fails, ensuring reliable estimation.
+When the MLE is on the boundary, standard asymptotic theory may not apply:
+\itemize{
+\item Wald confidence intervals can be too narrow or asymmetric
+\item Standard errors from the information matrix may be inappropriate
+\item The sampling distribution may not be normal
+}
 }
 
-\subsection{Risk Difference Interpretation}{
+\subsection{Robust Inference Methods}{
 
-Risk differences represent absolute changes in probability. A risk difference
-of 0.05 means the exposed group has a 5 percentage point higher risk than
-the unexposed group. This is often more interpretable than relative measures
-(risk ratios, odds ratios) for public health decision-making.
+For boundary cases, the function implements:
+\itemize{
+\item \strong{Profile likelihood intervals} (preferred when computationally feasible)
+\item \strong{Bootstrap confidence intervals} (robust but computationally intensive)
+\item \strong{Modified Wald intervals} with boundary adjustments
+}
 }
 }
 \examples{
-# Simple risk difference
 data(birthweight)
-rd_simple <- calc_risk_diff(
+
+# Basic usage with boundary detection
+result <- calc_risk_diff(
   data = birthweight,
   outcome = "low_birthweight",
   exposure = "smoking"
 )
-print(rd_simple)
 
-# Age-adjusted risk difference
-rd_adjusted <- calc_risk_diff(
+# Check for boundary cases
+if (any(result$on_boundary)) {
+  cat("Boundary case detected!\n")
+  cat("Boundary type:", result$boundary_type[result$on_boundary], "\n")
+  cat("CI method used:", result$ci_method[result$on_boundary], "\n")
+}
+
+# Force profile likelihood CIs for all cases
+result_profile <- calc_risk_diff(
   data = birthweight,
   outcome = "low_birthweight",
   exposure = "smoking",
-  adjust_vars = "maternal_age"
+  boundary_method = "profile"
 )
-print(rd_adjusted)
-
-# Stratified analysis
-rd_stratified <- calc_risk_diff(
-  data = birthweight,
-  outcome = "low_birthweight",
-  exposure = "smoking",
-  strata = "race"
-)
-print(rd_stratified)
 
 }
 \references{
-Donoghoe MW, Marschner IC (2018). "logbin: An R Package for Relative Risk
-Regression Using the Log-Binomial Model." Journal of Statistical Software,
-86(9), 1-22. doi:10.18637/jss.v086.i09
+Marschner IC, Gillett AC (2012). Relative Risk Regression: Reliable and
+Flexible Methods for Log-Binomial Models. Biostatistics, 13(1), 179-192.
 
-Rothman KJ, Greenland S, Lash TL (2008). Modern Epidemiology, 3rd edition.
-Lippincott Williams & Wilkins.
+Venzon DJ, Moolgavkar SH (1988). A Method for Computing Profile-Likelihood-Based
+Confidence Intervals. Journal of the Royal Statistical Society, 37(1), 87-94.
+
+Donoghoe MW, Marschner IC (2018). logbin: An R Package for Relative Risk
+Regression Using the Log-Binomial Model. Journal of Statistical Software,
+86(9), 1-22. doi:10.18637/jss.v086.i09
 }

@@ -15,6 +15,8 @@
 #' @references
 #' Marschner IC, Gillett AC (2012). Relative Risk Regression: Reliable and Flexible
 #' Methods for Log-Binomial Models. Biostatistics, 13(1), 179-192.
+#' @keywords internal
+#' @noRd
 .detect_boundary <- function(model, tolerance = 1e-6, prob_tolerance = 1e-8) {
 
   if (is.null(model) || !inherits(model, "glm")) {
@@ -60,6 +62,8 @@
 }
 
 #' Detect boundary for identity link models
+#' @keywords internal
+#' @noRd
 .detect_identity_boundary <- function(model, tolerance, prob_tolerance) {
 
   # For identity link: constraint is that all fitted probabilities ∈ [0,1]
@@ -115,6 +119,8 @@
 }
 
 #' Detect boundary for log link models
+#' @keywords internal
+#' @noRd
 .detect_log_boundary <- function(model, tolerance, prob_tolerance) {
 
   # For log link: constraint is that all fitted probabilities ≤ 1
@@ -142,6 +148,8 @@
 }
 
 #' Detect boundary for logit link models
+#' @keywords internal
+#' @noRd
 .detect_logit_boundary <- function(model, tolerance) {
 
   # For logit link, boundary typically occurs with complete separation
@@ -190,6 +198,8 @@
 #' @references
 #' Venzon DJ, Moolgavkar SH (1988). A Method for Computing Profile-Likelihood-Based
 #' Confidence Intervals. Journal of the Royal Statistical Society, 37(1), 87-94.
+#' @keywords internal
+#' @noRd
 .calculate_boundary_ci <- function(model, boundary_info, alpha = 0.05, method = "auto") {
 
   if (!boundary_info$on_boundary) {
@@ -215,6 +225,8 @@
 }
 
 #' Profile likelihood confidence intervals for boundary cases
+#' @keywords internal
+#' @noRd
 .profile_ci_boundary <- function(model, alpha) {
 
   tryCatch({
@@ -228,6 +240,8 @@
 }
 
 #' Bootstrap confidence intervals for boundary cases
+#' @keywords internal
+#' @noRd
 .bootstrap_ci_boundary <- function(model, alpha, n_boot = 1000) {
 
   # This is a simplified implementation
@@ -237,6 +251,8 @@
 }
 
 #' Modified Wald intervals with boundary adjustment
+#' @keywords internal
+#' @noRd
 .modified_wald_ci_boundary <- function(model, boundary_info, alpha) {
 
   # Apply conservative adjustment for boundary cases
@@ -263,6 +279,8 @@
 #' @param alpha Significance level
 #'
 #' @return Updated result with boundary information
+#' @keywords internal
+#' @noRd
 .add_boundary_info <- function(result, model_result, alpha = 0.05) {
 
   if (is.null(model_result$model)) {

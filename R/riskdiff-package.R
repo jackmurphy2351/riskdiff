@@ -1,6 +1,7 @@
 #' @keywords internal
 "_PACKAGE"
 
+# Add these imports:
 #' @importFrom dplyr %>%
 #' @importFrom dplyr across
 #' @importFrom dplyr all_of
@@ -21,4 +22,7 @@
 #' @importFrom scales pvalue
 #' @importFrom tibble tibble
 #' @importFrom stats setNames
+#' @importFrom stats coef confint fitted model.matrix
+#' @importFrom stats glm binomial plogis qnorm rbinom
+#' @importFrom stats reformulate vcov predict
 NULL
