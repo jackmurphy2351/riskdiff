@@ -1,58 +1,124 @@
 # ==============================================================================
-# R/data.R - Example dataset documentation
+# R/data.R - Dataset documentation for riskdiff package
 # ==============================================================================
 
-#' Simulated Birth Weight Study Data
+#' Synthetic Cancer Risk Factor Study Data (Cachar-Inspired)
 #'
-#' A simulated dataset containing information about maternal factors and
-#' birth weight outcomes, used for demonstrating risk difference calculations.
+#' A synthetic dataset inspired by cancer screening and risk factor patterns
+#' observed in Northeast India, specifically designed to reflect authentic
+#' epidemiological relationships without using real patient data.
 #'
-#' @format A data frame with 2,500 rows and 8 variables:
+#' @format A data frame with 2,500 rows and 11 variables:
 #' \describe{
-#'   \item{id}{Patient identifier (1 to 2500)}
-#'   \item{low_birthweight}{Binary outcome: 1 = low birth weight (<2500g), 0 = normal}
-#'   \item{smoking}{Maternal smoking status: "No" or "Yes"}
-#'   \item{maternal_age}{Maternal age in years (continuous, mean ~28)}
-#'   \item{race}{Maternal race: "White", "Black", "Hispanic", "Other"}
-#'   \item{education}{Education level: "Less than HS", "HS", "Some college", "College+"}
-#'   \item{prenatal_care}{Prenatal care adequacy: "Adequate", "Inadequate"}
-#'   \item{parity}{Number of previous births: 0, 1, 2, or 3+ (capped at 3)}
+#'   \item{id}{Participant identifier (1 to 2500)}
+#'   \item{age}{Age in years (continuous, range 18-84)}
+#'   \item{sex}{Biological sex: "male" or "female"}
+#'   \item{residence}{Residence type: "rural", "urban", or "urban slum"}
+#'   \item{smoking}{Current smoking status: "No" or "Yes"}
+#'   \item{tobacco_chewing}{Current tobacco chewing: "No" or "Yes"}
+#'   \item{areca_nut}{Current areca nut use: "No" or "Yes"}
+#'   \item{alcohol}{Current alcohol use: "No" or "Yes"}
+#'   \item{abnormal_screen}{Binary outcome: 1 = abnormal screening (precancerous lesions or cancer in screened sites), 0 = normal}
+#'   \item{head_neck_abnormal}{Binary outcome: 1 = head/neck abnormality detected, 0 = normal}
+#'   \item{age_group}{Age categories: "Under 40", "40-60", "Over 60"}
 #' }
 #'
 #' @details
-#' This dataset was simulated to reflect realistic associations between
-#' maternal factors and low birth weight risk. The relationships include:
+#' This synthetic dataset was designed to reflect authentic epidemiological
+#' patterns observed in Northeast India, particularly the distinctive tobacco
+#' and areca nut use patterns of the region. All data points are mathematically
+#' generated rather than collected from real individuals.
 #'
-#' * **Smoking**: Increases risk of low birth weight
-#' * **Maternal age**: Modest association with risk
-#' * **Race**: Health disparities reflected in different baseline risks
-#' * **Education**: Higher education associated with lower risk
-#' * **Prenatal care**: Adequate care reduces risk
-#' * **Parity**: Higher parity associated with slightly increased risk
+#' **Key epidemiological features modeled:**
+#' * **Areca nut use**: Very high prevalence (~69%) reflecting regional cultural practices
+#' * **Tobacco chewing**: Moderate to high prevalence (~53%), often used with areca nut
+#' * **Smoking**: Lower prevalence (~13%) with strong male predominance
+#' * **Cancer outcomes**: Realistic prevalence (~3.5%) for population-based screening,
+#'   including both precancerous lesions and invasive cancers
+#' * **Geographic patterns**: Predominantly rural population (~87%)
 #'
-#' The base rate of low birth weight is approximately 8%, which is realistic
-#' for developed countries. The effect sizes and interactions were designed
-#' to demonstrate various analysis scenarios including stratification and
-#' adjustment.
+#' **Risk Factor Relationships:**
+#' The data model realistic dose-response relationships between multiple
+#' tobacco exposures and cancer outcomes, with particularly strong associations
+#' for areca nut use and head/neck abnormalities, reflecting authentic
+#' epidemiological patterns from this region.
 #'
-#' @source Simulated data based on patterns from epidemiological literature
-#'   and the National Center for Health Statistics
+#' @source
+#' Synthetic dataset created for the riskdiff package. Inspired by cancer
+#' screening patterns observed in Northeast India but contains no real patient
+#' data. Statistical relationships designed to reflect authentic epidemiological
+#' patterns from this region for educational and methodological purposes.
+#'
+#' @references
+#' Epidemiological patterns modeled after studies of tobacco use and cancer
+#' risk in Northeast India. For research involving actual populations from
+#' this region, consult published literature on areca nut and tobacco-related
+#' cancer risks in South Asian populations.
+#'
+#' Warnakulasuriya S, Trivedy C, Peters TJ (2002). "Areca nut use: an independent
+#' risk factor for oral cancer." BMJ, 324(7341), 799-800.
+#'
+#' Gupta PC, Ray CS (2004). "Epidemiology of betel quid use." Annals of the
+#' Academy of Medicine, Singapore, 33(4 Suppl), 31-36.
+#'
+#' @note
+#' This synthetic dataset is designed for educational and software demonstration
+#' purposes. While the statistical relationships reflect authentic epidemiological
+#' patterns, the data should not be used for research conclusions about real
+#' populations.
 #'
 #' @examples
-#' data(birthweight)
-#' head(birthweight)
+#' data(cachar_sample)
+#' head(cachar_sample)
 #'
 #' # Basic descriptive statistics
-#' table(birthweight$smoking, birthweight$low_birthweight)
+#' table(cachar_sample$areca_nut, cachar_sample$abnormal_screen)
 #'
-#' # Summary by race
-#' with(birthweight, table(race, low_birthweight))
+#' # Regional tobacco use patterns
+#' with(cachar_sample, table(areca_nut, tobacco_chewing))
 #'
-#' # Simple risk difference
-#' rd <- calc_risk_diff(birthweight, "low_birthweight", "smoking")
-#' print(rd)
+#' # Simple risk difference for areca nut and abnormal screening
+#' rd_areca <- calc_risk_diff(
+#'   data = cachar_sample,
+#'   outcome = "abnormal_screen",
+#'   exposure = "areca_nut"
+#' )
+#' print(rd_areca)
 #'
-#' # Create a simple summary table
-#' cat(create_simple_table(rd, "Risk of Low Birth Weight by Smoking Status"))
+#' # Age-adjusted analysis
+#' rd_adjusted <- calc_risk_diff(
+#'   data = cachar_sample,
+#'   outcome = "abnormal_screen",
+#'   exposure = "areca_nut",
+#'   adjust_vars = "age"
+#' )
+#' print(rd_adjusted)
 #'
-"birthweight"
+#' # Stratified by sex
+#' rd_stratified <- calc_risk_diff(
+#'   data = cachar_sample,
+#'   outcome = "head_neck_abnormal",
+#'   exposure = "smoking",
+#'   strata = "sex"
+#' )
+#' print(rd_stratified)
+#'
+#' # Multiple tobacco exposures comparison
+#' rd_smoking <- calc_risk_diff(cachar_sample, "abnormal_screen", "smoking")
+#' rd_chewing <- calc_risk_diff(cachar_sample, "abnormal_screen", "tobacco_chewing")
+#' rd_areca <- calc_risk_diff(cachar_sample, "abnormal_screen", "areca_nut")
+#'
+#' # Compare risk differences
+#' cat("Risk differences for abnormal screening:\n")
+#' cat("Smoking:", sprintf("%.1f%%", rd_smoking$rd * 100), "\n")
+#' cat("Tobacco chewing:", sprintf("%.1f%%", rd_chewing$rd * 100), "\n")
+#' cat("Areca nut:", sprintf("%.1f%%", rd_areca$rd * 100), "\n")
+#'
+#' # Create summary table
+#' cat(create_simple_table(rd_areca, "Abnormal Screening Risk by Areca Nut Use"))
+#'
+"cachar_sample"
+
+# Note: The previous "birthweight" dataset has been replaced with "cachar_sample"
+# to provide more authentic and culturally relevant examples for risk difference
+# analysis while maintaining complete ethical compliance through synthetic data.

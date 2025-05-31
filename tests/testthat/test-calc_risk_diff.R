@@ -94,13 +94,13 @@ test_that("calc_risk_diff handles small samples gracefully", {
   expect_true(nrow(result) >= 1)
 })
 
-test_that("calc_risk_diff works with birthweight data", {
+test_that("calc_risk_diff works with cachar_sample data", {
   skip_if_not_installed("riskdiff")
-  data(birthweight, package = "riskdiff", envir = environment())
+  data(cachar_sample, package = "riskdiff", envir = environment())
 
   result <- calc_risk_diff(
-    data = birthweight,
-    outcome = "low_birthweight",
+    data = cachar_sample,
+    outcome = "abnormal_screen",
     exposure = "smoking"
   )
 

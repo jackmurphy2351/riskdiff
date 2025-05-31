@@ -91,12 +91,12 @@ For boundary cases, the function implements:
 }
 }
 \examples{
-data(birthweight)
+data(cachar_sample)
 
 # Basic usage with boundary detection
 result <- calc_risk_diff(
-  data = birthweight,
-  outcome = "low_birthweight",
+  data = cachar_sample,
+  outcome = "abnormal_screen",
   exposure = "smoking"
 )
 
@@ -109,8 +109,8 @@ if (any(result$on_boundary)) {
 
 # Force profile likelihood CIs for all cases
 result_profile <- calc_risk_diff(
-  data = birthweight,
-  outcome = "low_birthweight",
+  data = cachar_sample,
+  outcome = "abnormal_screen",
   exposure = "smoking",
   boundary_method = "profile"
 )

@@ -71,12 +71,12 @@
 #' 86(9), 1-22. doi:10.18637/jss.v086.i09
 #'
 #' @examples
-#' data(birthweight)
+#' data(cachar_sample)
 #'
 #' # Basic usage with boundary detection
 #' result <- calc_risk_diff(
-#'   data = birthweight,
-#'   outcome = "low_birthweight",
+#'   data = cachar_sample,
+#'   outcome = "abnormal_screen",
 #'   exposure = "smoking"
 #' )
 #'
@@ -89,8 +89,8 @@
 #'
 #' # Force profile likelihood CIs for all cases
 #' result_profile <- calc_risk_diff(
-#'   data = birthweight,
-#'   outcome = "low_birthweight",
+#'   data = cachar_sample,
+#'   outcome = "abnormal_screen",
 #'   exposure = "smoking",
 #'   boundary_method = "profile"
 #' )
@@ -259,8 +259,8 @@ calc_risk_diff <- function(data,
 #' @return Tibble with additional formatted columns
 #'
 #' @examples
-#' data(birthweight)
-#' results <- calc_risk_diff(birthweight, "low_birthweight", "smoking")
+#' data(cachar_sample)
+#' results <- calc_risk_diff(cachar_sample, "abnormal_screen", "smoking")
 #' formatted <- format_risk_diff(results)
 #' print(formatted)
 #'
@@ -304,8 +304,8 @@ format_risk_diff <- function(results, digits = 2, p_accuracy = 0.001) {
 #' for its side effect of printing formatted results to the console.
 #'
 #' @examples
-#' data(birthweight)
-#' result <- calc_risk_diff(birthweight, "low_birthweight", "smoking")
+#' data(cachar_sample)
+#' result <- calc_risk_diff(cachar_sample, "abnormal_screen", "smoking")
 #' print(result)
 #'
 #' # Show boundary information if available

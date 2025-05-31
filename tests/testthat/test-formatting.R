@@ -24,21 +24,21 @@ test_that("create_simple_table works", {
 
 test_that("create_rd_table returns appropriate object", {
   # Load the package dataset
-  data("birthweight")
-  
+  data("cachar_sample")
+
   # Calculate risk differences using correct arguments
   results <- calc_risk_diff(
-    data = birthweight,
-    outcome = "low_birthweight", 
+    data = cachar_sample,
+    outcome = "abnormal_screen",
     exposure = "smoking"
   )
-  
+
   # Create the formatted table
   table <- create_rd_table(results)
-  
+
   # Should return a useful object (will be data.frame when kableExtra not available)
   expect_true(is.data.frame(table) || inherits(table, "kableExtra"))
-  
+
   # Should have expected structure if it's a data frame
   if (is.data.frame(table)) {
     # Check for the ACTUAL column names returned by the function

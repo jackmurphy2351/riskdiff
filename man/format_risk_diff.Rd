@@ -21,8 +21,8 @@ Formats numerical values in risk difference results for presentation,
 with appropriate percentage formatting and rounding.
 }
 \examples{
-data(birthweight)
-results <- calc_risk_diff(birthweight, "low_birthweight", "smoking")
+data(cachar_sample)
+results <- calc_risk_diff(cachar_sample, "abnormal_screen", "smoking")
 formatted <- format_risk_diff(results)
 print(formatted)
 

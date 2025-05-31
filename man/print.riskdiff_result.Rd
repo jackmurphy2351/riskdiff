@@ -23,8 +23,8 @@ key statistics including risk differences, confidence intervals, and
 model types used. Version 0.2.0+ includes boundary case detection.
 }
 \examples{
-data(birthweight)
-result <- calc_risk_diff(birthweight, "low_birthweight", "smoking")
+data(cachar_sample)
+result <- calc_risk_diff(cachar_sample, "abnormal_screen", "smoking")
 print(result)
 
 # Show boundary information if available

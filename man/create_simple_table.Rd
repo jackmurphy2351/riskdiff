@@ -18,8 +18,8 @@ A formatted character vector representing the table
 Creates a simple text-based summary table that doesn't require kableExtra.
 }
 \examples{
-data(birthweight)
-results <- calc_risk_diff(birthweight, "low_birthweight", "smoking")
+data(cachar_sample)
+results <- calc_risk_diff(cachar_sample, "abnormal_screen", "smoking")
 cat(create_simple_table(results))
 
 }

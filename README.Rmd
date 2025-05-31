@@ -57,12 +57,12 @@ devtools::install_github("jackmurphy2351/riskdiff")
 library(riskdiff)
 
 # Load example data
-data(birthweight)
+data(cachar_sample)
 
 # Simple risk difference with boundary detection
 result <- calc_risk_diff(
-  data = birthweight,
-  outcome = "low_birthweight",
+  data = cachar_sample,
+  outcome = "abnormal_screen",
   exposure = "smoking"
 )
 
@@ -106,10 +106,10 @@ if (any(result$on_boundary)) {
 ```{r basic}
 # Age-adjusted risk difference with boundary detection
 rd_adjusted <- calc_risk_diff(
-  data = birthweight,
-  outcome = "low_birthweight", 
+  data = cachar_sample,
+  outcome = "abnormal_screen", 
   exposure = "smoking",
-  adjust_vars = "maternal_age",
+  adjust_vars = "age",
   boundary_method = "auto"  # Automatic robust method selection
 )
 
@@ -119,20 +119,20 @@ print(rd_adjusted)
 ### Stratified Analysis with Boundary Awareness
 
 ```{r stratified}
-# Stratified by race with boundary detection
+# Stratified by residence with boundary detection
 rd_stratified <- calc_risk_diff(
-  data = birthweight,
-  outcome = "low_birthweight",
+  data = cachar_sample,
+  outcome = "abnormal_screen",
   exposure = "smoking",
-  adjust_vars = "maternal_age",
-  strata = "race"
+  adjust_vars = "age",
+  strata = "residence"
 )
 
 print(rd_stratified)
 
 # Summary of boundary cases across strata
 boundary_summary <- rd_stratified[rd_stratified$on_boundary, 
-                                  c("race", "boundary_type", "ci_method")]
+                                  c("residence", "boundary_type", "ci_method")]
 if (nrow(boundary_summary) > 0) {
   cat("\nBoundary cases by stratum:\n")
   print(boundary_summary)
@@ -143,14 +143,14 @@ if (nrow(boundary_summary) > 0) {
 
 ```{r tables}
 # Create a simple text table with boundary information
-cat(create_simple_table(rd_stratified, "Risk by Smoking Status and Race"))
+cat(create_simple_table(rd_stratified, "Risk by Smoking Status and Residence"))
 ```
 
 ```{r tables-kable, eval=FALSE}
 # Create publication-ready table (requires kableExtra)
 library(kableExtra)
 create_rd_table(rd_stratified, 
-                caption = "Risk of Low Birth Weight by Smoking Status",
+                caption = "Risk of Abnormal Screening Result by Smoking Status",
                 include_model_type = TRUE)
 ```
 
@@ -184,8 +184,8 @@ The package uses generalized linear models with different link functions:
 ```{r boundary-methods}
 # Force specific boundary handling
 rd_conservative <- calc_risk_diff(
-  birthweight,
-  "low_birthweight", 
+  cachar_sample,
+  "abnormal_screen", 
   "smoking",
   boundary_method = "auto"  # Options: "auto", "profile", "wald"
 )
@@ -199,8 +199,8 @@ table(rd_conservative$ci_method)
 ```{r links}
 # Force a specific link function
 rd_logit <- calc_risk_diff(
-  birthweight, 
-  "low_birthweight", 
+  cachar_sample, 
+  "abnormal_screen", 
   "smoking",
   link = "logit"
 )
@@ -215,8 +215,8 @@ cat("Boundary detected:", rd_logit$on_boundary, "\n")
 ```{r confidence}
 # 90% confidence intervals with boundary detection
 rd_90 <- calc_risk_diff(
-  birthweight,
-  "low_birthweight", 
+  cachar_sample,
+  "abnormal_screen", 
   "smoking",
   alpha = 0.10  # 1 - 0.10 = 90% CI
 )
@@ -232,8 +232,8 @@ print(rd_90)
 
 ```{r result-structure}
 # Examine the enhanced result structure
-data(birthweight)
-result <- calc_risk_diff(birthweight, "low_birthweight", "smoking")
+data(cachar_sample)
+result <- calc_risk_diff(cachar_sample, "abnormal_screen", "smoking")
 names(result)
 
 # Key new columns:
@@ -245,18 +245,18 @@ names(result)
 
 ## Example Dataset
 
-The package includes a realistic simulated birth weight dataset:
+The package includes a realistic simulated cancer screening dataset:
 
 ```{r dataset}
-data(birthweight)
-str(birthweight)
+data(cachar_sample)
+str(cachar_sample)
 
 # Summary statistics showing realistic associations
-table(birthweight$smoking, birthweight$low_birthweight)
+table(cachar_sample$smoking, cachar_sample$abnormal_screen)
 
 # Risk difference analysis
-rd_analysis <- calc_risk_diff(birthweight, "low_birthweight", "smoking")
-cat("Smoking increases low birth weight risk by", 
+rd_analysis <- calc_risk_diff(cachar_sample, "abnormal_screen", "smoking")
+cat("Smoking increases risk of abnormal screening result by", 
     sprintf("%.1f", rd_analysis$rd * 100), "percentage points\n")
 ```
 

@@ -33,18 +33,18 @@ appropriate grouping and formatting. Requires the kableExtra package
 for full functionality.
 }
 \examples{
-data(birthweight)
-results <- calc_risk_diff(birthweight, "low_birthweight", "smoking")
+data(cachar_sample)
+results <- calc_risk_diff(cachar_sample, "abnormal_screen", "smoking")
 
 # Basic table (works without kableExtra)
-basic_table <- create_rd_table(results, caption = "Risk of Low Birth Weight")
+basic_table <- create_rd_table(results, caption = "Risk of Abnormal Cancer Screening")
 print(basic_table)
 
 # Enhanced table (requires kableExtra)
 if (requireNamespace("kableExtra", quietly = TRUE)) {
   enhanced_table <- create_rd_table(
     results,
-    caption = "Risk of Low Birth Weight by Smoking Status",
+    caption = "Risk of Abnormal Cancer Screening by Smoking Status",
     include_model_type = TRUE
   )
   print(enhanced_table)
