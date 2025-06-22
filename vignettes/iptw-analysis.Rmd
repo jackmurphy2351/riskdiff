@@ -1,0 +1,459 @@
+---
+title: "Causal Inference with IPTW in riskdiff"
+author: "John D. Murphy"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+vignette: >
+  %\VignetteIndexEntry{Causal Inference with IPTW in riskdiff}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5,
+  warning = FALSE,
+  message = FALSE
+)
+
+library(riskdiff)
+```
+
+## Introduction
+
+This vignette demonstrates how to use the **riskdiff** package to perform causal inference using Inverse Probability of Treatment Weighting (IPTW). IPTW is a powerful method for estimating causal effects from observational data by creating a pseudo-population where treatment assignment is independent of measured confounders.
+
+### When to Use IPTW
+
+IPTW is particularly useful when:
+
+- You want to estimate **causal effects** (not just associations)
+- You have measured all important confounders
+- The treatment assignment mechanism is complex
+- You want to estimate population-level effects (ATE) or effects on specific subgroups (ATT/ATC)
+
+### Key Assumptions
+
+IPTW relies on three main assumptions:
+
+1. **No unmeasured confounding**: All confounders are measured and included
+2. **Positivity**: All subjects have non-zero probability of receiving either treatment
+3. **Correct model specification**: The propensity score model is correctly specified
+
+## Basic IPTW Analysis
+
+Let's start with a simple example using the Cachar cancer screening dataset:
+
+```{r basic_example}
+# Load the data
+data(cachar_sample)
+
+# Quick look at the data
+head(cachar_sample)
+table(cachar_sample$areca_nut, cachar_sample$abnormal_screen)
+```
+
+### Step 1: Calculate IPTW Weights
+
+First, we estimate propensity scores and calculate weights:
+
+```{r calculate_weights}
+# Calculate ATE weights for areca nut use
+iptw_result <- calc_iptw_weights(
+  data = cachar_sample,
+  treatment = "areca_nut", 
+  covariates = c("age", "sex", "residence", "smoking", "tobacco_chewing"),
+  weight_type = "ATE",
+  verbose = TRUE
+)
+
+# Examine the results
+print(iptw_result)
+```
+
+### Step 2: Check IPTW Assumptions
+
+Before interpreting results, we should check key assumptions:
+
+```{r check_assumptions}
+# Comprehensive assumption checking
+assumptions <- check_iptw_assumptions(iptw_result, verbose = TRUE)
+```
+
+### Step 3: Visualize Balance
+
+Visual diagnostics help assess whether weighting achieved balance:
+
+```{r balance_plots, fig.width=8, fig.height=6}
+# Create balance plots (requires ggplot2)
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  plots <- create_balance_plots(iptw_result, plot_type = "both")
+  print(plots$love_plot)
+  print(plots$ps_plot)
+}
+```
+
+### Step 4: Estimate Causal Risk Difference
+
+Now we can estimate the causal effect:
+
+```{r causal_effect}
+# Estimate ATE using IPTW
+rd_causal <- calc_risk_diff_iptw(
+  data = cachar_sample,
+  outcome = "abnormal_screen",
+  treatment = "areca_nut",
+  covariates = c("age", "sex", "residence", "smoking", "tobacco_chewing"),
+  weight_type = "ATE",
+  verbose = TRUE
+)
+
+print(rd_causal)
+summary(rd_causal)
+```
+
+## Different Types of Causal Effects
+
+IPTW can estimate different causal estimands depending on the research question:
+
+### Average Treatment Effect (ATE)
+
+The effect of treatment if the entire population received treatment vs. if none received treatment:
+
+```{r ate_example}
+rd_ate <- calc_risk_diff_iptw(
+  data = cachar_sample,
+  outcome = "abnormal_screen", 
+  treatment = "areca_nut",
+  covariates = c("age", "sex", "residence", "smoking"),
+  weight_type = "ATE"
+)
+
+cat("ATE: The average causal effect of areca nut use in the population\n")
+cat("Risk Difference:", scales::percent(rd_ate$rd_iptw, accuracy = 0.01), "\n")
+```
+
+### Average Treatment Effect on the Treated (ATT)
+
+The effect among those who actually received treatment:
+
+```{r att_example}
+rd_att <- calc_risk_diff_iptw(
+  data = cachar_sample,
+  outcome = "abnormal_screen",
+  treatment = "areca_nut", 
+  covariates = c("age", "sex", "residence", "smoking"),
+  weight_type = "ATT"
+)
+
+cat("ATT: The average causal effect among areca nut users\n")
+cat("Risk Difference:", scales::percent(rd_att$rd_iptw, accuracy = 0.01), "\n")
+```
+
+### Average Treatment Effect on the Controls (ATC)
+
+The effect among those who did not receive treatment:
+
+```{r atc_example}
+rd_atc <- calc_risk_diff_iptw(
+  data = cachar_sample,
+  outcome = "abnormal_screen",
+  treatment = "areca_nut",
+  covariates = c("age", "sex", "residence", "smoking"), 
+  weight_type = "ATC"
+)
+
+cat("ATC: The average causal effect among non-users of areca nut\n")
+cat("Risk Difference:", scales::percent(rd_atc$rd_iptw, accuracy = 0.01), "\n")
+```
+
+## Advanced Options
+
+### Bootstrap Confidence Intervals
+
+For small samples or when assumptions are questionable, bootstrap confidence intervals may be more robust:
+
+```{r bootstrap_example}
+rd_bootstrap <- calc_risk_diff_iptw(
+  data = cachar_sample,
+  outcome = "head_neck_abnormal",
+  treatment = "tobacco_chewing",
+  covariates = c("age", "sex", "residence", "areca_nut"),
+  bootstrap_ci = TRUE,
+  boot_n = 500,  # Use more in practice (1000+)
+  verbose = FALSE
+)
+
+print(rd_bootstrap)
+```
+
+### Different Propensity Score Models
+
+You can specify different link functions for the propensity score model:
+
+```{r ps_models}
+# Logistic regression (default)
+ps_logit <- calc_iptw_weights(
+  data = cachar_sample,
+  treatment = "tobacco_chewing",
+  covariates = c("age", "sex", "residence", "areca_nut"),
+  method = "logistic"
+)
+
+# Probit regression
+ps_probit <- calc_iptw_weights(
+  data = cachar_sample,
+  treatment = "tobacco_chewing", 
+  covariates = c("age", "sex", "residence", "areca_nut"),
+  method = "probit"
+)
+
+# Compare propensity score distributions
+cat("Logistic PS range:", round(range(ps_logit$ps), 3), "\n")
+cat("Probit PS range:", round(range(ps_probit$ps), 3), "\n")
+```
+
+### Weight Stabilization and Trimming
+
+Stabilized weights often have better properties:
+
+```{r stabilization}
+# Unstabilized weights
+ps_unstab <- calc_iptw_weights(
+  data = cachar_sample,
+  treatment = "areca_nut",
+  covariates = c("age", "sex", "residence"),
+  stabilize = FALSE
+)
+
+# Stabilized weights (default)
+ps_stab <- calc_iptw_weights(
+  data = cachar_sample,
+  treatment = "areca_nut",
+  covariates = c("age", "sex", "residence"), 
+  stabilize = TRUE
+)
+
+cat("Unstabilized weight variance:", round(var(ps_unstab$weights), 2), "\n")
+cat("Stabilized weight variance:", round(var(ps_stab$weights), 2), "\n")
+```
+
+Extreme weights can be problematic and may need trimming:
+
+```{r trimming}
+# Check for extreme weights
+summary(ps_stab$weights)
+
+# Trim at 1st and 99th percentiles
+ps_trimmed <- calc_iptw_weights(
+  data = cachar_sample,
+  treatment = "areca_nut",
+  covariates = c("age", "sex", "residence"),
+  trim_weights = TRUE,
+  trim_quantiles = c(0.01, 0.99)
+)
+
+cat("Original weight range:", round(range(ps_stab$weights), 2), "\n")
+cat("Trimmed weight range:", round(range(ps_trimmed$weights), 2), "\n")
+```
+  treatment = "smoking",
+  covariates = c("maternal_age", "race", "education"),
+  trim_weights = TRUE,
+  trim_quantiles = c(0.01, 0.99)
+)
+
+cat("Original weight range:", round(range(ps_stab$weights), 2), "\n")
+cat("Trimmed weight range:", round(range(ps_trimmed$weights), 2), "\n")
+```
+
+## Comparison with Traditional Regression
+
+Let's compare IPTW results with traditional regression adjustment:
+
+```{r comparison}
+# Traditional regression-based risk difference
+rd_regression <- calc_risk_diff(
+  data = cachar_sample,
+  outcome = "abnormal_screen",
+  exposure = "areca_nut",
+  adjust_vars = c("age", "sex", "residence", "smoking"),
+  link = "auto"
+)
+
+# IPTW-based causal risk difference  
+rd_iptw <- calc_risk_diff_iptw(
+  data = cachar_sample,
+  outcome = "abnormal_screen",
+  treatment = "areca_nut",
+  covariates = c("age", "sex", "residence", "smoking"),
+  weight_type = "ATE"
+)
+
+# Compare results
+comparison_table <- data.frame(
+  Method = c("Regression Adjustment", "IPTW (ATE)"),
+  Risk_Difference = scales::percent(c(rd_regression$rd, rd_iptw$rd_iptw), accuracy = 0.01),
+  CI_Lower = scales::percent(c(rd_regression$ci_lower, rd_iptw$ci_lower), accuracy = 0.01),
+  CI_Upper = scales::percent(c(rd_regression$ci_upper, rd_iptw$ci_upper), accuracy = 0.01),
+  P_Value = sprintf("%.3f", c(rd_regression$p_value, rd_iptw$p_value))
+)
+
+print(comparison_table)
+```
+
+## Troubleshooting Common Issues
+
+### Poor Balance
+
+If covariates remain imbalanced after weighting:
+
+```{r poor_balance, eval=FALSE}
+# Check which variables have poor balance
+assumptions <- check_iptw_assumptions(iptw_result)
+poor_balance_vars <- assumptions$balance$poor_balance_vars
+
+if (length(poor_balance_vars) > 0) {
+  cat("Variables with poor balance:", paste(poor_balance_vars, collapse = ", "), "\n")
+  
+  # Try including interactions or polynomial terms
+  iptw_improved <- calc_iptw_weights(
+    data = cachar_sample,
+    treatment = "areca_nut",
+    covariates = c("age", "I(age^2)", "sex", "residence", 
+                   "smoking", "age:sex"),  # Add interactions
+    weight_type = "ATE"
+  )
+}
+```
+
+### Extreme Propensity Scores
+
+When subjects have very high or low propensity scores:
+
+```{r extreme_ps, eval=FALSE}
+# Check propensity score distribution
+iptw_result <- calc_iptw_weights(
+  data = cachar_sample,
+  treatment = "areca_nut",
+  covariates = c("age", "sex", "residence")
+)
+
+# Identify subjects with extreme scores
+extreme_low <- which(iptw_result$ps < 0.05)
+extreme_high <- which(iptw_result$ps > 0.95)
+
+if (length(extreme_low) > 0 || length(extreme_high) > 0) {
+  cat("Consider trimming sample to region of common support\n")
+  
+  # Restrict to common support
+  common_support <- iptw_result$ps >= 0.05 & iptw_result$ps <= 0.95
+  data_restricted <- cachar_sample[common_support, ]
+  
+  # Re-analyze with restricted sample
+  rd_restricted <- calc_risk_diff_iptw(
+    data = data_restricted,
+    outcome = "abnormal_screen",
+    treatment = "areca_nut", 
+    covariates = c("age", "sex", "residence")
+  )
+}
+```
+
+### Model Specification
+
+Testing different model specifications:
+
+```{r model_spec, eval=FALSE}
+# Simple model
+ps_simple <- calc_iptw_weights(
+  data = cachar_sample,
+  treatment = "areca_nut",
+  covariates = c("age", "sex")
+)
+
+# Complex model with interactions
+ps_complex <- calc_iptw_weights(
+  data = cachar_sample,
+  treatment = "areca_nut",
+  covariates = c("age", "I(age^2)", "sex", "residence", 
+                 "smoking", "tobacco_chewing", "age:sex")
+)
+
+# Compare balance
+check_iptw_assumptions(ps_simple, verbose = FALSE)
+check_iptw_assumptions(ps_complex, verbose = FALSE)
+```
+
+## Sensitivity Analysis
+
+IPTW assumes no unmeasured confounding. Sensitivity analysis can assess robustness:
+
+```{r sensitivity, eval=FALSE}
+# Simulate an unmeasured confounder
+set.seed(123)
+cachar_sample$unmeasured_confounder <- rbinom(nrow(cachar_sample), 1, 0.3)
+
+# Compare results with and without the unmeasured confounder
+rd_without_u <- calc_risk_diff_iptw(
+  data = cachar_sample,
+  outcome = "abnormal_screen",
+  treatment = "areca_nut",
+  covariates = c("age", "sex", "residence")
+)
+
+rd_with_u <- calc_risk_diff_iptw(
+  data = cachar_sample,
+  outcome = "abnormal_screen", 
+  treatment = "areca_nut",
+  covariates = c("age", "sex", "residence", "unmeasured_confounder")
+)
+
+cat("Without unmeasured confounder:", scales::percent(rd_without_u$rd_iptw), "\n")
+cat("With unmeasured confounder:", scales::percent(rd_with_u$rd_iptw), "\n")
+cat("Difference:", scales::percent(abs(rd_without_u$rd_iptw - rd_with_u$rd_iptw)), "\n")
+```
+
+## Best Practices
+
+1. **Always check assumptions** before interpreting results
+2. **Visualize balance** using love plots and propensity score distributions  
+3. **Consider the estimand** (ATE vs. ATT vs. ATC) based on your research question
+4. **Use stabilized weights** unless you have a specific reason not to
+5. **Trim extreme weights** cautiously - they may indicate model misspecification
+6. **Compare with regression adjustment** as a sensitivity check
+7. **Report effective sample size** to assess precision loss
+8. **Consider bootstrap CIs** for small samples or non-normal distributions
+
+## Reporting IPTW Results
+
+When reporting IPTW analyses, include:
+
+1. **Propensity score model specification** and diagnostics
+2. **Balance assessment** before and after weighting
+3. **Weight distribution** and any trimming performed
+4. **Effective sample size** and precision considerations
+5. **Sensitivity analyses** when possible
+6. **Clear statement of estimand** (ATE/ATT/ATC)
+
+## Conclusion
+
+IPTW provides a powerful framework for causal inference from observational data. The **riskdiff** package makes these methods accessible while providing essential diagnostics and visualizations. Remember that causal inference requires careful thought about study design, confounders, and assumptions - the methods are only as good as these foundational elements.
+
+For more advanced applications, consider methods like:
+- Marginal structural models for time-varying treatments
+- Doubly robust estimation combining IPTW with outcome modeling
+- Machine learning approaches for propensity score estimation
+
+## References
+
+Austin, P. C. (2011). An introduction to propensity score methods for reducing the effects of confounding in observational studies. *Multivariate Behavioral Research*, 46(3), 399-424.
+
+Hernán, M. A., & Robins, J. M. (2020). *Causal inference: What if*. Boca Raton: Chapman & Hall/CRC.
+
+Robins, J. M., Hernán, M. A., & Brumback, B. (2000). Marginal structural models and causal inference in epidemiology. *Epidemiology*, 11(5), 550-560.

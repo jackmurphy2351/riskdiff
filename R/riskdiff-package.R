@@ -25,4 +25,12 @@
 #' @importFrom stats coef confint fitted model.matrix
 #' @importFrom stats glm binomial plogis qnorm rbinom
 #' @importFrom stats reformulate vcov predict
+#' @importFrom stats plogis
+#' @importFrom stats predict
+#' @importFrom stats fitted
+#' @importFrom stats weighted.mean
+#' @importFrom stats var
+#' @importFrom stats complete.cases
+#' @importFrom stats quantile
+#'
 NULL

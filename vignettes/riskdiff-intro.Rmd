@@ -1,0 +1,335 @@
+---
+title: "Getting Started with Risk Differences"
+output: rmarkdown::html_vignette
+vignette: >
+ %\VignetteIndexEntry{Getting Started with Risk Differences}
+ %\VignetteEngine{knitr::rmarkdown}
+ %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+ collapse = TRUE,
+ comment = "#>",
+ fig.width = 7,
+ fig.height = 4,
+ fig.align = "center"
+)
+```
+
+```{r load libraries}
+library(riskdiff)
+library(dplyr)
+library(ggplot2)
+```
+
+## Why Risk Differences Matter in Public Health
+
+When communicating health risks to policymakers, patients, or the public, **absolute measures** like risk differences are often more meaningful than **relative measures** like odds ratios or risk ratios.
+
+Consider these two statements about betel nut (areca nut) chewing and cancer risk:
+
+1.  "Betel nut chewing increases the odds of cancer by 5.2 times"
+
+2.  "Betel nut chewing increases cancer risk by 12 percentage points"
+
+The second statement is immediately actionable: in a screening camp of 1,000 people, you would expect to find approximately 120 additional cancer cases among betel nut chewers compared to non-chewers. This directly informs:
+
+-   Resource allocation for screening programs
+
+-   Expected yield from targeted interventions
+
+-   Number needed to screen calculations
+
+-   Public health messaging priorities
+
+> **Key Concept**: Risk differences represent the **additional burden of disease** attributable to an exposure. They are on the same scale as the outcome, making them intuitive for non-statistical audiences.
+
+## Understanding the Example Data
+
+The `riskdiff` package includes example data from a cancer screening program in Northeast India:
+
+```{r load example data}
+data(cachar_sample)
+
+# Basic structure
+glimpse(cachar_sample)
+
+# Key variables for our analysis
+cachar_sample %>%
+  select(abnormal_screen, chewer, smoker, drinker, age, sex, residence) %>%
+  summary()
+```
+
+This dataset represents a cross-sectional screening study where:
+
+-   `abnormal_screen` = 1 indicates an abnormal cancer screening result
+
+-   `chewer` indicates tobacco chewing status
+
+-   Other variables capture demographics and risk factors
+
+## Your First Risk Difference Analysis
+
+Let's calculate the risk difference for cancer associated with betel nut chewing:
+
+```{r simple unadjusted analysis}
+# Simple unadjusted analysis
+rd_simple <- calc_risk_diff(
+  data = cachar_sample,
+  outcome = "diagnosis_bin",
+  exposure = "chewer"
+)
+
+print(rd_simple)
+```
+
+### Understanding the Output
+
+The output shows:
+
+-   **rd**: The risk difference (e.g., 0.082 = 8.2 percentage points)
+
+-   **ci_lower, ci_upper**: 95% confidence interval bounds
+
+-   **p_value**: Test of whether the risk difference equals zero
+
+-   **model_type**: Which GLM link function successfully converged
+
+-   **n_obs**: Number of observations used in the analysis
+
+### Interpreting Risk Differences
+
+```{r visualisation}
+# Let's visualize what this risk difference means
+exposure_summary <- cachar_sample %>%
+  group_by(chewer) %>%
+  summarise(
+    n = n(),
+    cases = sum(diagnosis_bin),
+    risk = mean(diagnosis_bin),
+    se = sqrt(risk * (1 - risk) / n)
+  ) %>%
+  mutate(
+    risk_percent = risk * 100,
+    se_percent = se * 100
+  )
+
+print(exposure_summary)
+
+# The risk difference is simply:
+rd_value <- diff(exposure_summary$risk)
+cat("Risk difference:", round(rd_value * 100, 1), "percentage points\n")
+```
+
+### Adjusted Analyses
+
+Real-world associations are often confounded. Let's adjust for age and sex:
+
+```{r adjusted analysis}
+# Age and sex adjusted analysis
+rd_adjusted <- calc_risk_diff(
+  data = cachar_sample,
+  outcome = "diagnosis_bin",
+  exposure = "chewer",
+  adjust_vars = c("age", "sex")
+)
+
+print(rd_adjusted)
+
+# Compare unadjusted vs adjusted
+comparison <- bind_rows(
+  rd_simple %>% mutate(model = "Unadjusted"),
+  rd_adjusted %>% mutate(model = "Adjusted")
+) %>%
+  select(model, rd, ci_lower, ci_upper, p_value)
+
+print(comparison)
+```
+
+> **Note**: Adjustment often changes the risk difference estimate. This indicates that age and/or sex were confounders of the chewing-cancer association.
+
+### Stratified Analysis
+
+Sometimes we want to know if effects differ across subgroups:
+
+```{r stratified analysis}
+# Stratified by residence (urban vs rural)
+rd_stratified <- calc_risk_diff(
+  data = cachar_sample,
+  outcome = "diagnosis_bin",
+  exposure = "chewer",
+  strata = "residence"
+)
+
+print(rd_stratified)
+```
+
+This shows separate risk differences for urban and rural areas, which might reflect:
+
+-   Different exposure patterns
+-   Access to healthcare
+-   Environmental co-factors
+
+### Visualizing Your Results
+
+A picture is worth a thousand p-values:
+
+```{r visualise stratified results}
+# Create a forest plot of risk differences
+plot_data <- rd_stratified %>%
+  mutate(
+    label = paste0(residence, "\n(n=", n_obs, ")"),
+    rd_percent = rd * 100,
+    ci_lower_percent = ci_lower * 100,
+    ci_upper_percent = ci_upper * 100
+  )
+
+ggplot(plot_data, aes(x = rd_percent, y = label)) +
+  geom_point(size = 3) +
+  geom_errorbarh(aes(xmin = ci_lower_percent, xmax = ci_upper_percent), 
+                 height = 0.2) +
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.5) +
+  labs(
+    title = "Risk Difference for Cancer by Betel Nut Chewing",
+    subtitle = "Stratified by Urban/Rural Residence",
+    x = "Risk Difference (percentage points)",
+    y = ""
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    axis.text.y = element_text(size = 11)
+  )
+```
+
+### Common Pitfalls and Solutions
+
+#### 1. Model Convergence Issues
+
+The identity link GLM (which directly estimates risk differences) often fails to converge. The `riskdiff` package handles this automatically:
+
+```{r convergence handling}
+# Force different link functions
+rd_identity <- calc_risk_diff(
+  cachar_sample, "diagnosis_bin", "chewer", 
+  link = "identity"
+)
+
+rd_log <- calc_risk_diff(
+  cachar_sample, "diagnosis_bin", "chewer", 
+  link = "log"
+)
+
+# Compare model types used
+cat("Identity link model type:", rd_identity$model_type, "\n")
+cat("Log link model type:", rd_log$model_type, "\n")
+```
+
+#### 2. Very Rare Outcomes
+
+With rare outcomes, risk differences become very small:
+
+```{r rare outcomes}
+# Create a rare outcome (1% prevalence)
+cachar_sample$rare_outcome <- rbinom(nrow(cachar_sample), 1, 0.01)
+
+rd_rare <- calc_risk_diff(
+  cachar_sample, 
+  "rare_outcome", 
+  "chewer"
+)
+
+print(rd_rare)
+```
+
+> **Tip**: For very rare outcomes (\<1%), consider whether risk ratios might be more appropriate for your research question.
+
+#### 3. Missing Data
+
+The package automatically handles missing data by complete case analysis:
+
+```{r missing data}
+# Check for missing data
+missing_summary <- cachar_sample %>%
+  summarise(across(everything(), ~sum(is.na(.))))
+
+# Analysis with variables that have missing data
+rd_missing <- calc_risk_diff(
+  cachar_sample,
+  "diagnosis_bin",
+  "chewer",
+  adjust_vars = c("age", "white_discharge")  # white_discharge has missing values
+)
+
+cat("Complete cases used:", rd_missing$n_obs, "out of", nrow(cachar_sample), "\n")
+```
+
+### Quick Reference
+
+#### Basic Syntax
+
+```{r basic syntax}
+calc_risk_diff(
+  data,                    # Your dataset
+  outcome,                 # Binary outcome variable (0/1)
+  exposure,                # Exposure of interest
+  adjust_vars = NULL,      # Variables to adjust for
+  strata = NULL,          # Stratification variables
+  link = "auto",          # Link function: "auto", "identity", "log", "logit"
+  alpha = 0.05,           # Significance level (0.05 = 95% CI)
+  verbose = FALSE         # Print diagnostic messages
+)
+```
+
+#### Interpretation Guide
+
+| Risk Difference | Interpretation | Public Health Meaning |
+|----|----|----|
+| 0.05 (5%) | 5 percentage point increase | 50 extra cases per 1,000 screened |
+| 0.01 (1%) | 1 percentage point increase | 10 extra cases per 1,000 screened |
+| -0.03 (-3%) | 3 percentage point decrease | 30 fewer cases per 1,000 screened |
+
+### When to Use Risk Differences
+
+✅ **Use risk differences when:**
+
+-   Communicating to non-statistical audiences
+
+-   Making policy decisions about interventions
+
+-   The outcome is relatively common (\>5%)
+
+-   You need to calculate number needed to treat/screen
+
+-   Comparing absolute impact across different populations
+
+❌ **Consider alternatives when:**
+
+-   Outcome is very rare (\<1%)
+
+-   You need to compare across populations with very different baseline risks
+
+-   Your research question is about biological/etiological mechanisms
+
+## Next Steps
+
+Now that you understand the basics:
+
+1.  See the **"Complete Example"** vignette for a full analysis workflow
+
+2.  Check the **"Technical Details"** vignette for statistical methodology
+
+3.  Use `?calc_risk_diff` for detailed function documentation
+
+## Getting Help
+
+-   **Issues or bugs**: [https://github.com/[your-username]/riskdiff/issues](https://github.com/%5Byour-username%5D/riskdiff/issues)
+
+-   **Function help**: `?calc_risk_diff`, `?format_risk_diff`
+
+-   **All vignettes**: `browseVignettes("riskdiff")`
+
+------------------------------------------------------------------------
+
+*This vignette is part of the riskdiff package (v0.2.0), developed to make risk difference calculations accessible to public health researchers.*

@@ -2,13 +2,15 @@
 # R/data.R - Dataset documentation for riskdiff package
 # ==============================================================================
 
-#' Synthetic Cancer Risk Factor Study Data (Cachar-Inspired)
+#' Synthetic Cancer Risk Factor Study Data
 #'
 #' A synthetic dataset inspired by cancer screening and risk factor patterns
-#' observed in Northeast India, specifically designed to reflect authentic
-#' epidemiological relationships without using real patient data.
+#' observed during an opportunistic screening program conducted at the
+#' Cachar Cancer Hospital and Research Centre in Northeast India, specifically
+#' designed to reflect authentic epidemiological relationships without using
+#' real patient data.
 #'
-#' @format A data frame with 2,500 rows and 11 variables:
+#' @format A data frame with 2,500 rows and 12 variables:
 #' \describe{
 #'   \item{id}{Participant identifier (1 to 2500)}
 #'   \item{age}{Age in years (continuous, range 18-84)}
@@ -18,9 +20,10 @@
 #'   \item{tobacco_chewing}{Current tobacco chewing: "No" or "Yes"}
 #'   \item{areca_nut}{Current areca nut use: "No" or "Yes"}
 #'   \item{alcohol}{Current alcohol use: "No" or "Yes"}
-#'   \item{abnormal_screen}{Binary outcome: 1 = abnormal screening (precancerous lesions or cancer in screened sites), 0 = normal}
+#'   \item{abnormal_screen}{Binary outcome: 1 = abnormal screening (precancerous lesions or cancer), 0 = normal}
 #'   \item{head_neck_abnormal}{Binary outcome: 1 = head/neck abnormality detected, 0 = normal}
 #'   \item{age_group}{Age categories: "Under 40", "40-60", "Over 60"}
+#'   \item{tobacco_areca_both}{Combined exposure: "Yes" if both tobacco_chewing and areca_nut are "Yes", "No" otherwise}
 #' }
 #'
 #' @details
@@ -37,8 +40,15 @@
 #'   including both precancerous lesions and invasive cancers
 #' * **Geographic patterns**: Predominantly rural population (~87%)
 #'
+#' **Synthetic Data Advantages:**
+#' The synthetic approach preserves authentic statistical relationships while:
+#' * Avoiding any privacy or ethical concerns
+#' * Ensuring reproducible examples and tests
+#' * Providing controlled demonstration scenarios
+#' * Maintaining cultural authenticity for educational purposes
+#'
 #' **Risk Factor Relationships:**
-#' The data model realistic dose-response relationships between multiple
+#' The data models realistic dose-response relationships between multiple
 #' tobacco exposures and cancer outcomes, with particularly strong associations
 #' for areca nut use and head/neck abnormalities, reflecting authentic
 #' epidemiological patterns from this region.
@@ -65,7 +75,8 @@
 #' This synthetic dataset is designed for educational and software demonstration
 #' purposes. While the statistical relationships reflect authentic epidemiological
 #' patterns, the data should not be used for research conclusions about real
-#' populations.
+#' populations. The cultural patterns represented (high areca nut use, specific
+#' tobacco consumption practices) are authentic to Northeast India.
 #'
 #' @examples
 #' data(cachar_sample)
