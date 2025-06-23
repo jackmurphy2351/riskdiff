@@ -33,7 +33,7 @@ Consider these two statements about betel nut (areca nut) chewing and cancer ris
 
 2.  "Betel nut chewing increases cancer risk by 12 percentage points"
 
-The second statement is immediately actionable: in a screening camp of 1,000 people, you would expect to find approximately 120 additional cancer cases among betel nut chewers compared to non-chewers. This directly informs:
+The second statement is immediately actionable: in a screening group of 1,000 people, you would expect to find approximately 120 additional cancer cases among betel nut chewers compared to non-chewers. This directly informs:
 
 -   Resource allocation for screening programs
 
@@ -57,7 +57,7 @@ glimpse(cachar_sample)
 
 # Key variables for our analysis
 cachar_sample %>%
-  select(abnormal_screen, chewer, smoker, drinker, age, sex, residence) %>%
+  select(abnormal_screen, areca_nut, smoking, alcohol, age, sex, residence) %>%
   summary()
 ```
 
@@ -65,7 +65,7 @@ This dataset represents a cross-sectional screening study where:
 
 -   `abnormal_screen` = 1 indicates an abnormal cancer screening result
 
--   `chewer` indicates tobacco chewing status
+-   `areca_nut` indicates areca (or betel) nut chewing status
 
 -   Other variables capture demographics and risk factors
 
@@ -77,8 +77,8 @@ Let's calculate the risk difference for cancer associated with betel nut chewing
 # Simple unadjusted analysis
 rd_simple <- calc_risk_diff(
   data = cachar_sample,
-  outcome = "diagnosis_bin",
-  exposure = "chewer"
+  outcome = "abnormal_screen",
+  exposure = "areca_nut"
 )
 
 print(rd_simple)
@@ -103,11 +103,11 @@ The output shows:
 ```{r visualisation}
 # Let's visualize what this risk difference means
 exposure_summary <- cachar_sample %>%
-  group_by(chewer) %>%
+  group_by(areca_nut) %>%
   summarise(
     n = n(),
-    cases = sum(diagnosis_bin),
-    risk = mean(diagnosis_bin),
+    cases = sum(abnormal_screen),
+    risk = mean(abnormal_screen),
     se = sqrt(risk * (1 - risk) / n)
   ) %>%
   mutate(
@@ -130,21 +130,19 @@ Real-world associations are often confounded. Let's adjust for age and sex:
 # Age and sex adjusted analysis
 rd_adjusted <- calc_risk_diff(
   data = cachar_sample,
-  outcome = "diagnosis_bin",
-  exposure = "chewer",
+  outcome = "abnormal_screen",
+  exposure = "areca_nut",
   adjust_vars = c("age", "sex")
 )
-
 print(rd_adjusted)
 
-# Compare unadjusted vs adjusted
-comparison <- bind_rows(
-  rd_simple %>% mutate(model = "Unadjusted"),
-  rd_adjusted %>% mutate(model = "Adjusted")
-) %>%
-  select(model, rd, ci_lower, ci_upper, p_value)
-
-print(comparison)
+# Show comparison in a readable format
+cat("\n=== COMPARISON: UNADJUSTED vs ADJUSTED ===\n")
+cat("Unadjusted Risk Difference:", sprintf("%.2f%%", rd_simple$rd * 100), 
+    sprintf("(%.2f%%, %.2f%%)", rd_simple$ci_lower * 100, rd_simple$ci_upper * 100), "\n")
+cat("Adjusted Risk Difference:  ", sprintf("%.2f%%", rd_adjusted$rd * 100), 
+    sprintf("(%.2f%%, %.2f%%)", rd_adjusted$ci_lower * 100, rd_adjusted$ci_upper * 100), "\n")
+cat("Difference in estimates:   ", sprintf("%.2f%%", (rd_adjusted$rd - rd_simple$rd) * 100), "percentage points\n")
 ```
 
 > **Note**: Adjustment often changes the risk difference estimate. This indicates that age and/or sex were confounders of the chewing-cancer association.
@@ -157,8 +155,8 @@ Sometimes we want to know if effects differ across subgroups:
 # Stratified by residence (urban vs rural)
 rd_stratified <- calc_risk_diff(
   data = cachar_sample,
-  outcome = "diagnosis_bin",
-  exposure = "chewer",
+  outcome = "abnormal_screen",
+  exposure = "areca_nut",
   strata = "residence"
 )
 
@@ -212,12 +210,12 @@ The identity link GLM (which directly estimates risk differences) often fails to
 ```{r convergence handling}
 # Force different link functions
 rd_identity <- calc_risk_diff(
-  cachar_sample, "diagnosis_bin", "chewer", 
+  cachar_sample, "abnormal_screen", "areca_nut", 
   link = "identity"
 )
 
 rd_log <- calc_risk_diff(
-  cachar_sample, "diagnosis_bin", "chewer", 
+  cachar_sample, "abnormal_screen", "areca_nut", 
   link = "log"
 )
 
@@ -237,7 +235,7 @@ cachar_sample$rare_outcome <- rbinom(nrow(cachar_sample), 1, 0.01)
 rd_rare <- calc_risk_diff(
   cachar_sample, 
   "rare_outcome", 
-  "chewer"
+  "areca_nut"
 )
 
 print(rd_rare)
@@ -250,42 +248,87 @@ print(rd_rare)
 The package automatically handles missing data by complete case analysis:
 
 ```{r missing data}
-# Check for missing data
-missing_summary <- cachar_sample %>%
-  summarise(across(everything(), ~sum(is.na(.))))
+# Create a copy with some missing data for demonstration
+set.seed(123)  # For reproducibility
+cachar_with_missing <- cachar_sample %>%
+  mutate(
+    # Introduce more modest missing data (~3% in age, ~2% in alcohol)
+    age_with_missing = ifelse(runif(n()) < 0.03, NA, age),
+    alcohol_with_missing = ifelse(runif(n()) < 0.02, NA, alcohol)
+  )
+
+# Check the missing data patterns
+missing_summary <- cachar_with_missing %>%
+  summarise(
+    total_observations = n(),
+    age_missing = sum(is.na(age_with_missing)),
+    alcohol_missing = sum(is.na(alcohol_with_missing)),
+    total_missing_any = sum(!complete.cases(select(., age_with_missing, alcohol_with_missing, abnormal_screen, areca_nut))),
+    complete_cases = sum(complete.cases(select(., age_with_missing, alcohol_with_missing, abnormal_screen, areca_nut)))
+  )
+
+print(missing_summary)
 
 # Analysis with variables that have missing data
 rd_missing <- calc_risk_diff(
-  cachar_sample,
-  "diagnosis_bin",
-  "chewer",
-  adjust_vars = c("age", "white_discharge")  # white_discharge has missing values
+  cachar_with_missing,
+  "abnormal_screen",
+  "areca_nut",
+  adjust_vars = c("age_with_missing", "alcohol_with_missing")
 )
 
-cat("Complete cases used:", rd_missing$n_obs, "out of", nrow(cachar_sample), "\n")
+# Compare with complete case analysis
+rd_complete <- calc_risk_diff(
+  cachar_sample,
+  "abnormal_screen", 
+  "areca_nut",
+  adjust_vars = c("age", "alcohol")
+)
+
+cat("\n=== IMPACT OF MISSING DATA ===\n")
+cat("Complete data analysis (n=", rd_complete$n_obs, "): ", sprintf("%.2f%%", rd_complete$rd * 100), 
+    sprintf(" (%.2f%%, %.2f%%)", rd_complete$ci_lower * 100, rd_complete$ci_upper * 100), "\n")
+
+# Check if missing data analysis succeeded
+if (!is.na(rd_missing$rd)) {
+  cat("Missing data analysis (n=", rd_missing$n_obs, "):  ", sprintf("%.2f%%", rd_missing$rd * 100), 
+      sprintf(" (%.2f%%, %.2f%%)", rd_missing$ci_lower * 100, rd_missing$ci_upper * 100), "\n")
+  cat("Cases lost to missing data: ", rd_complete$n_obs - rd_missing$n_obs, "\n")
+} else {
+  cat("Missing data analysis: FAILED (insufficient data or convergence issues)\n")
+  cat("Attempted to use n =", rd_missing$n_obs, "complete cases\n")
+  cat("Cases lost to missing data: ", nrow(cachar_with_missing) - rd_missing$n_obs, "\n\n")
+  
+  cat("📚 LESSON: This demonstrates why missing data can be problematic:\n")
+  cat("   • Listwise deletion can dramatically reduce sample size\n")
+  cat("   • Small samples may cause model convergence failures\n") 
+  cat("   • Consider multiple imputation for better missing data handling\n")
+  cat("   • The riskdiff package gracefully handles these failures\n")
+}
 ```
 
 ### Quick Reference
 
 #### Basic Syntax
 
-```{r basic syntax}
-calc_risk_diff(
-  data,                    # Your dataset
-  outcome,                 # Binary outcome variable (0/1)
-  exposure,                # Exposure of interest
-  adjust_vars = NULL,      # Variables to adjust for
-  strata = NULL,          # Stratification variables
-  link = "auto",          # Link function: "auto", "identity", "log", "logit"
-  alpha = 0.05,           # Significance level (0.05 = 95% CI)
-  verbose = FALSE         # Print diagnostic messages
+```{r basic syntax example, eval=FALSE}
+# Example usage:
+result <- calc_risk_diff(
+  data = cachar_sample,           # Your dataset
+  outcome = "abnormal_screen",    # Binary outcome variable (0/1)
+  exposure = "areca_nut",         # Exposure of interest
+  adjust_vars = c("age", "sex"),  # Variables to adjust for
+  strata = "residence",           # Stratification variables
+  link = "auto",                  # Link function: "auto", "identity", "log", "logit"
+  alpha = 0.05,                   # Significance level (0.05 = 95% CI)
+  verbose = FALSE                 # Print diagnostic messages if TRUE
 )
 ```
 
 #### Interpretation Guide
 
 | Risk Difference | Interpretation | Public Health Meaning |
-|----|----|----|
+|------------------------|------------------------|------------------------|
 | 0.05 (5%) | 5 percentage point increase | 50 extra cases per 1,000 screened |
 | 0.01 (1%) | 1 percentage point increase | 10 extra cases per 1,000 screened |
 | -0.03 (-3%) | 3 percentage point decrease | 30 fewer cases per 1,000 screened |
@@ -324,7 +367,7 @@ Now that you understand the basics:
 
 ## Getting Help
 
--   **Issues or bugs**: [https://github.com/[your-username]/riskdiff/issues](https://github.com/%5Byour-username%5D/riskdiff/issues)
+-   **Issues or bugs**: [https://github.com/jackmurphy2351/riskdiff/issues](https://github.com/jackmurphy2351/riskdiff)
 
 -   **Function help**: `?calc_risk_diff`, `?format_risk_diff`
 

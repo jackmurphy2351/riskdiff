@@ -66,12 +66,12 @@ The function fits a model predicting treatment assignment from covariates:
 
 \subsection{Weight Types}{
 \itemize{
-\item \strong{ATE weights}: 1/π(X) for treated, 1/(1-π(X)) for controls
-\item \strong{ATT weights}: 1 for treated, π(X)/(1-π(X)) for controls
-\item \strong{ATC weights}: (1-π(X))/π(X) for treated, 1 for controls
+\item \strong{ATE weights}: 1/pi(X) for treated, 1/(1-pi(X)) for controls
+\item \strong{ATT weights}: 1 for treated, pi(X)/(1-pi(X)) for controls
+\item \strong{ATC weights}: (1-pi(X))/pi(X) for treated, 1 for controls
 }
 
-Where π(X) is the propensity score (probability of treatment given X).
+Where pi(X) is the propensity score (probability of treatment given X).
 }
 
 \subsection{Stabilized Weights}{
@@ -117,8 +117,8 @@ Research, 46(3), 399-424. doi:10.1080/00273171.2011.568786
 Crump RK, Hotz VJ, Imbens GW, Mitnik OA (2009). "Dealing with Limited Overlap
 in Estimation of Average Treatment Effects." Biometrika, 96(1), 187-199.
 
-Hernán MA, Robins JM (2020). Causal Inference: What If. Boca Raton: Chapman & Hall/CRC.
+Hernan MA, Robins JM (2020). Causal Inference: What If. Boca Raton: Chapman & Hall/CRC.
 
-Robins JM, Hernán MA, Brumback B (2000). "Marginal Structural Models and Causal
+Robins JM, Hernan MA, Brumback B (2000). "Marginal Structural Models and Causal
 Inference in Epidemiology." Epidemiology, 11(5), 550-560.
 }

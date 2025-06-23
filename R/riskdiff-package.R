@@ -32,5 +32,16 @@
 #' @importFrom stats var
 #' @importFrom stats complete.cases
 #' @importFrom stats quantile
-#'
+#' @importFrom graphics abline axis hist legend lines par points
+#' @importFrom grDevices rgb
+#' @importFrom utils globalVariables
+
+# Suppress R CMD check notes for NSE variables
+utils::globalVariables(c(
+  "std_diff",
+  "variable",
+  "timing",
+  "ps",
+  "treatment"
+))
 NULL

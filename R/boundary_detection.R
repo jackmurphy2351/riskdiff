@@ -66,7 +66,7 @@
 #' @noRd
 .detect_identity_boundary <- function(model, tolerance, prob_tolerance) {
 
-  # For identity link: constraint is that all fitted probabilities ∈ [0,1]
+  # For identity link: constraint is that all fitted probabilities in [0,1]
   fitted_probs <- fitted(model)
   design_matrix <- model.matrix(model)
   coefs <- coef(model)
@@ -75,7 +75,7 @@
   linear_pred <- as.vector(design_matrix %*% coefs)
 
   # Parameters are on boundary if:
-  # 1. Any fitted probability ≈ 0 or ≈ 1
+  # 1. Any fitted probability <= 0 or >= 1
   # 2. Gradient suggests we're constrained
 
   at_lower <- any(linear_pred < tolerance)
@@ -123,7 +123,7 @@
 #' @noRd
 .detect_log_boundary <- function(model, tolerance, prob_tolerance) {
 
-  # For log link: constraint is that all fitted probabilities ≤ 1
+  # For log link: constraint is that all fitted probabilities <= 1
   fitted_probs <- fitted(model)
 
   # Check if any probabilities are near 1

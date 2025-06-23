@@ -165,15 +165,15 @@
 
   # Calculate weights based on type
   if (weight_type == "ATE") {
-    # ATE weights: 1/π for treated, 1/(1-π) for controls
+    # ATE weights: 1/pi for treated, 1/(1-pi) for controls
     weights <- ifelse(treatment_numeric == 1, 1/ps, 1/(1-ps))
 
   } else if (weight_type == "ATT") {
-    # ATT weights: 1 for treated, π/(1-π) for controls
+    # ATT weights: 1 for treated, pi/(1-pi) for controls
     weights <- ifelse(treatment_numeric == 1, 1, ps/(1-ps))
 
   } else if (weight_type == "ATC") {
-    # ATC weights: (1-π)/π for treated, 1 for controls
+    # ATC weights: (1-pi)/pi for treated, 1 for controls
     weights <- ifelse(treatment_numeric == 1, (1-ps)/ps, 1)
   }
 

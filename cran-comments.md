@@ -44,8 +44,12 @@ All causal inference methods are grounded in established literature:
 ### R CMD Check Results
 
 ```
-Status: 0 errors ✓ | 0 warnings ✓ | 0 notes ✓
+Status: 0 errors ✓ | 0 warnings ✓ | 2 notes
 ```
+
+**Notes:**
+1. "unable to verify current time" - Local system clock verification issue, not package-related
+2. Missing imports for graphics functions - Fixed by adding proper @importFrom declarations
 
 **Test Suite Results:**
 ```

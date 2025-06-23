@@ -485,3 +485,69 @@
 
   return(result)
 }
+
+# Add to your R/utils.R or create new R/unicode_utils.R
+
+#' Safe Unicode Display Functions
+#'
+#' Functions to safely display Unicode characters with fallbacks
+#' for systems that don't support them properly.
+
+# Check if terminal/console supports Unicode
+.supports_unicode <- function() {
+  # Check system capabilities
+  if (Sys.info()["sysname"] == "Windows") {
+    # Windows console historically has poor Unicode support
+    return(capabilities("iconv") && l10n_info()$`UTF-8`)
+  }
+
+  # Check if we're in RStudio (better Unicode support)
+  if (Sys.getenv("RSTUDIO") == "1") {
+    return(TRUE)
+  }
+
+  # Check locale
+  locale <- Sys.getlocale("LC_CTYPE")
+  return(grepl("UTF-8|utf8", locale, ignore.case = TRUE))
+}
+
+# Safe symbol display with fallbacks
+.safe_alpha <- function() {
+  if (.supports_unicode()) {
+    return("\u03b1")  # α
+  } else {
+    return("alpha")
+  }
+}
+
+.safe_plusminus <- function() {
+  if (.supports_unicode()) {
+    return("\u00b1")  # ±
+  } else {
+    return("+/-")
+  }
+}
+
+.safe_check <- function() {
+  if (.supports_unicode()) {
+    return("\u2713")  # ✓
+  } else {
+    return("[PASS]")
+  }
+}
+
+.safe_warning <- function() {
+  if (.supports_unicode()) {
+    return("\u26a0")  # ⚠
+  } else {
+    return("[CAUTION]")
+  }
+}
+
+.safe_cross <- function() {
+  if (.supports_unicode()) {
+    return("\u2717")  # ✗
+  } else {
+    return("[FAIL]")
+  }
+}

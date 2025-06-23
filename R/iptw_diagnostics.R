@@ -244,9 +244,9 @@ summary.riskdiff_iptw_result <- function(object, ...) {
   cat("P-value:", ifelse(p_val < 0.001, "<0.001", sprintf("%.3f", p_val)), "\n")
 
   if (!is.na(p_val) && p_val < 0.05) {
-    cat("Result: Statistically significant at α = ", alpha, "\n", sep = "")
+    cat("Result: Statistically significant at ", .safe_alpha(), " = ", alpha, "\n", sep = "")
   } else {
-    cat("Result: Not statistically significant at α = ", alpha, "\n", sep = "")
+    cat("Result: Not statistically significant at ", .safe_alpha(), " = ", alpha, "\n", sep = "")
   }
 
   # Interpretation
@@ -305,7 +305,7 @@ summary.riskdiff_iptw_result <- function(object, ...) {
     ggplot2::scale_color_manual(values = c("Before Weighting" = "#E31A1C", "After Weighting" = "#1F78B4")) +
     ggplot2::labs(
       title = "Covariate Balance Before and After IPTW",
-      subtitle = paste("Dashed lines show ±", threshold, "threshold"),
+      subtitle = paste("Dashed lines show", .safe_plusminus(), threshold, "threshold"),
       x = "Standardized Difference",
       y = "Covariates",
       color = "Timing"
@@ -543,9 +543,9 @@ summary.riskdiff_iptw_result <- function(object, ...) {
 
   # Overall assessment
   status_color <- switch(result$overall_assessment,
-                         "PASS" = "✓",
-                         "CAUTION" = "⚠",
-                         "FAIL" = "✗"
+                         "PASS" = .safe_check(),
+                         "CAUTION" = .safe_warning(),
+                         "FAIL" = .safe_cross()
   )
 
   cat("Overall Assessment:", status_color, result$overall_assessment, "\n\n")
@@ -556,7 +556,9 @@ summary.riskdiff_iptw_result <- function(object, ...) {
       ", ", round(result$positivity$max_ps, 3), "]\n", sep = "")
   cat("   Extreme values (PS < 0.05):", result$positivity$extreme_low, "\n")
   cat("   Extreme values (PS > 0.95):", result$positivity$extreme_high, "\n")
-  cat("   Status:", ifelse(result$positivity$violation, "⚠ VIOLATION", "✓ OK"), "\n\n")
+  cat("   Status:", ifelse(result$positivity$violation,
+                           paste(.safe_warning(), "VIOLATION"),
+                           paste(.safe_check(), "OK")), "\n\n")
 
   # Balance
   cat("2. Covariate Balance\n")
@@ -564,7 +566,9 @@ summary.riskdiff_iptw_result <- function(object, ...) {
   if (result$balance$poor_balance) {
     cat("   Variables with poor balance:", paste(result$balance$poor_balance_vars, collapse = ", "), "\n")
   }
-  cat("   Status:", ifelse(result$balance$poor_balance, "⚠ POOR BALANCE", "✓ BALANCED"), "\n\n")
+  cat("   Status:", ifelse(result$balance$poor_balance,
+                           paste(.safe_warning(), "POOR BALANCE"),
+                           paste(.safe_check(), "BALANCED")), "\n\n")
 
   # Weights
   cat("3. Weight Distribution\n")
@@ -574,7 +578,9 @@ summary.riskdiff_iptw_result <- function(object, ...) {
   if (result$weights$extreme_weights) {
     cat("   Extreme weights (>10):", result$weights$n_extreme, "\n")
   }
-  cat("   Status:", ifelse(result$weights$extreme_weights, "⚠ EXTREME WEIGHTS", "✓ OK"), "\n\n")
+  cat("   Status:", ifelse(result$weights$extreme_weights,
+                           paste(.safe_warning(), "EXTREME WEIGHTS"),
+                           paste(.safe_check(), "OK")), "\n\n")
 
   # Recommendations
   if (length(result$recommendations) > 0) {
