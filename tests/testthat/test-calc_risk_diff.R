@@ -76,23 +76,34 @@ test_that("calc_risk_diff handles adjustment variables", {
   expect_equal(nrow(result), 1)
 })
 
-test_that("calc_risk_diff handles stratification", {
-  data <- create_test_data()
+test_that("calc_risk_diff handles missing data in real dataset", {
+  data(cachar_sample)
 
-  result <- calc_risk_diff(
-    data = data,
-    outcome = "outcome",
-    exposure = "exposure",
-    strata = "sex"
+  # Test scenario 1: Missing outcome data
+  test_data1 <- cachar_sample
+  test_data1$abnormal_screen[1:50] <- NA
+
+  result1 <- calc_risk_diff(
+    data = test_data1,
+    outcome = "abnormal_screen",
+    exposure = "areca_nut"
   )
 
-  expect_s3_class(result, "riskdiff_result")
-  expect_true(nrow(result) >= 1)  # Should have at least 1 result
-  expect_true("sex" %in% names(result))
+  expect_s3_class(result1, "riskdiff_result")
+  expect_true(result1$n_obs < nrow(cachar_sample))
 
-  # Check that we have both sexes represented (if data allows)
-  sex_values <- unique(result$sex)
-  expect_true(length(sex_values) >= 1)
+  # Test scenario 2: Missing exposure data
+  test_data2 <- cachar_sample
+  test_data2$areca_nut[1:30] <- NA
+
+  result2 <- calc_risk_diff(
+    data = test_data2,
+    outcome = "abnormal_screen",
+    exposure = "areca_nut"
+  )
+
+  expect_s3_class(result2, "riskdiff_result")
+  expect_true(result2$n_obs < nrow(cachar_sample))
 })
 
 test_that("calc_risk_diff validates inputs properly", {
@@ -512,12 +523,12 @@ test_that("calc_risk_diff link functions handle challenging data", {
 
 message("Enhanced test suite for calc_risk_diff completed successfully!")
 message("Tests include:")
-message("✓ Basic functionality with standard and Cachar-inspired data")
-message("✓ Tobacco/areca nut combination exposures (tobacco_areca_both)")
-message("✓ Multiple stratification and adjustment scenarios")
-message("✓ Model convergence challenges and robustness")
-message("✓ Missing data handling")
-message("✓ Confidence interval validation")
-message("✓ Integration with package datasets")
-message("✓ Performance testing with larger datasets")
+message(paste0(.safe_check()), "Basic functionality with standard and Cachar-inspired data")
+message(paste0(.safe_check()), "Tobacco/areca nut combination exposures (tobacco_areca_both)")
+message(paste0(.safe_check()), "Multiple stratification and adjustment scenarios")
+message(paste0(.safe_check()), "Model convergence challenges and robustness")
+message(paste0(.safe_check()), "Missing data handling")
+message(paste0(.safe_check()), "Confidence interval validation")
+message("paste0(.safe_check()), Integration with package datasets")
+message("paste0(.safe_check()), Performance testing with larger datasets")
 message("Total test scenarios: ~40 comprehensive test cases")

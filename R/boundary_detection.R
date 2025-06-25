@@ -1,312 +1,260 @@
-# boundary_detection.R - Functions for detecting and handling boundary cases
-
-#' Detect if MLE is on the boundary of parameter space
+#' Detect Parameter Space Boundary Issues
 #'
-#' @param model Fitted GLM object
-#' @param tolerance Numerical tolerance for boundary detection (default: 1e-6)
-#' @param prob_tolerance Tolerance for fitted probabilities near 0 or 1 (default: 1e-8)
+#' @description
+#' Detects when maximum likelihood estimates lie on or near the boundary
+#' of the parameter space for log-binomial and identity link models.
+#' Based on methods described in Donoghoe & Marschner (2018).
 #'
-#' @return List with boundary information
+#' @param model A fitted GLM object
+#' @param data The data used to fit the model
+#' @param tolerance Numeric tolerance for boundary detection (default: 1e-6)
+#' @param verbose Logical indicating whether to print diagnostic information
 #'
-#' @details
-#' Based on methods described in Marschner & Gillett (2012) for log-binomial models.
-#' Checks both parameter estimates and fitted probabilities for boundary conditions.
+#' @return
+#' A list containing:
+#' \describe{
+#'   \item{boundary_detected}{Logical indicating if boundary was detected}
+#'   \item{boundary_type}{Character describing the type of boundary issue}
+#'   \item{boundary_parameters}{Character vector of parameters on boundary}
+#'   \item{fitted_probabilities_range}{Numeric vector with min/max fitted probabilities}
+#'   \item{separation_detected}{Logical indicating complete/quasi-separation}
+#' }
 #'
 #' @references
-#' Marschner IC, Gillett AC (2012). Relative Risk Regression: Reliable and Flexible
-#' Methods for Log-Binomial Models. Biostatistics, 13(1), 179-192.
+#' Donoghoe MW, Marschner IC (2018). "logbin: An R Package for Relative Risk
+#' Regression Using the Log-Binomial Model." Journal of Statistical Software,
+#' 86(9), 1-22. doi:10.18637/jss.v086.i09
+#'
 #' @keywords internal
-#' @noRd
-.detect_boundary <- function(model, tolerance = 1e-6, prob_tolerance = 1e-8) {
+.detect_boundary <- function(model, data, tolerance = 1e-6, verbose = FALSE) {
 
-  if (is.null(model) || !inherits(model, "glm")) {
-    return(list(
-      on_boundary = FALSE,
-      boundary_type = "none",
-      boundary_params = character(0),
-      fitted_probs_boundary = FALSE,
-      warning_message = NULL
-    ))
-  }
-
-  # Get fitted probabilities
-  fitted_probs <- fitted(model)
-
-  # Check if fitted probabilities are at boundaries
-  probs_at_zero <- any(fitted_probs < prob_tolerance)
-  probs_at_one <- any(fitted_probs > (1 - prob_tolerance))
-  fitted_probs_boundary <- probs_at_zero || probs_at_one
-
-  # For identity link, check parameter constraints directly
-  if (model$family$link == "identity") {
-    boundary_info <- .detect_identity_boundary(model, tolerance, prob_tolerance)
-  } else if (model$family$link == "log") {
-    boundary_info <- .detect_log_boundary(model, tolerance, prob_tolerance)
-  } else {
-    # For logit link, boundary is less common but can occur with separation
-    boundary_info <- .detect_logit_boundary(model, tolerance)
-  }
-
-  # Combine information
+  # Initialize return structure with safe defaults
   result <- list(
-    on_boundary = boundary_info$on_boundary || fitted_probs_boundary,
-    boundary_type = boundary_info$boundary_type,
-    boundary_params = boundary_info$boundary_params,
-    fitted_probs_boundary = fitted_probs_boundary,
-    fitted_probs_at_zero = probs_at_zero,
-    fitted_probs_at_one = probs_at_one,
-    warning_message = boundary_info$warning_message
+    boundary_detected = FALSE,
+    boundary_type = "none",
+    boundary_parameters = character(0),
+    fitted_probabilities_range = c(NA_real_, NA_real_),
+    separation_detected = FALSE
   )
 
-  return(result)
-}
-
-#' Detect boundary for identity link models
-#' @keywords internal
-#' @noRd
-.detect_identity_boundary <- function(model, tolerance, prob_tolerance) {
-
-  # For identity link: constraint is that all fitted probabilities in [0,1]
-  fitted_probs <- fitted(model)
-  design_matrix <- model.matrix(model)
-  coefs <- coef(model)
-
-  # Check if any linear combinations approach constraints
-  linear_pred <- as.vector(design_matrix %*% coefs)
-
-  # Parameters are on boundary if:
-  # 1. Any fitted probability <= 0 or >= 1
-  # 2. Gradient suggests we're constrained
-
-  at_lower <- any(linear_pred < tolerance)
-  at_upper <- any(linear_pred > (1 - tolerance))
-
-  on_boundary <- at_lower || at_upper
-
-  boundary_type <- if (at_lower && at_upper) {
-    "both_bounds"
-  } else if (at_upper) {
-    "upper_bound"  # probabilities near 1
-  } else if (at_lower) {
-    "lower_bound"  # probabilities near 0
-  } else {
-    "none"
-  }
-
-  # Identify which parameters might be causing boundary issues
-  boundary_params <- character(0)
-  if (on_boundary) {
-    # This is simplified - more sophisticated methods would use the gradient
-    extreme_indices <- which(linear_pred < tolerance | linear_pred > (1 - tolerance))
-    if (length(extreme_indices) > 0) {
-      # Get parameter names that might be problematic
-      boundary_params <- names(coefs)
-    }
-  }
-
-  warning_message <- if (on_boundary) {
-    "Identity link model has fitted probabilities at or near boundary (0 or 1). Confidence intervals may be unreliable."
-  } else {
-    NULL
-  }
-
-  list(
-    on_boundary = on_boundary,
-    boundary_type = boundary_type,
-    boundary_params = boundary_params,
-    warning_message = warning_message
-  )
-}
-
-#' Detect boundary for log link models
-#' @keywords internal
-#' @noRd
-.detect_log_boundary <- function(model, tolerance, prob_tolerance) {
-
-  # For log link: constraint is that all fitted probabilities <= 1
-  fitted_probs <- fitted(model)
-
-  # Check if any probabilities are near 1
-  at_boundary <- any(fitted_probs > (1 - prob_tolerance))
-
-  boundary_type <- if (at_boundary) "upper_bound" else "none"
-
-  boundary_params <- if (at_boundary) names(coef(model)) else character(0)
-
-  warning_message <- if (at_boundary) {
-    "Log link model has fitted probabilities near 1. Parameter estimates may be on boundary."
-  } else {
-    NULL
-  }
-
-  list(
-    on_boundary = at_boundary,
-    boundary_type = boundary_type,
-    boundary_params = boundary_params,
-    warning_message = warning_message
-  )
-}
-
-#' Detect boundary for logit link models
-#' @keywords internal
-#' @noRd
-.detect_logit_boundary <- function(model, tolerance) {
-
-  # For logit link, boundary typically occurs with complete separation
-  # Check for very large coefficient estimates
-  coefs <- coef(model)
-  large_coefs <- abs(coefs) > 10  # Somewhat arbitrary threshold
-
-  on_boundary <- any(large_coefs, na.rm = TRUE)
-
-  boundary_type <- if (on_boundary) "separation" else "none"
-
-  boundary_params <- if (on_boundary) {
-    names(coefs)[large_coefs & !is.na(large_coefs)]
-  } else {
-    character(0)
-  }
-
-  warning_message <- if (on_boundary) {
-    "Logit model may have separation issues. Very large coefficient estimates detected."
-  } else {
-    NULL
-  }
-
-  list(
-    on_boundary = on_boundary,
-    boundary_type = boundary_type,
-    boundary_params = boundary_params,
-    warning_message = warning_message
-  )
-}
-
-#' Calculate robust confidence intervals for boundary cases
-#'
-#' @param model Fitted GLM object
-#' @param boundary_info Output from .detect_boundary()
-#' @param alpha Significance level
-#' @param method Method for boundary CI: "profile", "bootstrap", "wald"
-#'
-#' @details
-#' When MLE is on boundary, standard Wald intervals may be inappropriate.
-#' This function implements alternative methods:
-#' - Profile likelihood intervals (preferred when feasible)
-#' - Bootstrap intervals
-#' - Modified Wald intervals with boundary adjustment
-#'
-#' @references
-#' Venzon DJ, Moolgavkar SH (1988). A Method for Computing Profile-Likelihood-Based
-#' Confidence Intervals. Journal of the Royal Statistical Society, 37(1), 87-94.
-#' @keywords internal
-#' @noRd
-.calculate_boundary_ci <- function(model, boundary_info, alpha = 0.05, method = "auto") {
-
-  if (!boundary_info$on_boundary) {
-    # Use standard methods if not on boundary
-    return(.safe_confint(model, level = 1 - alpha))
-  }
-
-  # Select method based on model and boundary type
-  if (method == "auto") {
-    method <- if (model$family$link == "identity" && boundary_info$fitted_probs_boundary) {
-      "profile"  # Profile likelihood preferred for identity link boundary cases
-    } else {
-      "bootstrap"  # Bootstrap as fallback
-    }
-  }
-
-  switch(method,
-         "profile" = .profile_ci_boundary(model, alpha),
-         "bootstrap" = .bootstrap_ci_boundary(model, alpha),
-         "wald" = .modified_wald_ci_boundary(model, boundary_info, alpha),
-         stop("Unknown CI method for boundary cases: ", method)
-  )
-}
-
-#' Profile likelihood confidence intervals for boundary cases
-#' @keywords internal
-#' @noRd
-.profile_ci_boundary <- function(model, alpha) {
-
-  tryCatch({
-    # Try profile likelihood method
-    confint(model, level = 1 - alpha, method = "profile")
-  }, error = function(e) {
-    # Fallback to Wald if profile fails
-    warning("Profile likelihood CI failed, using Wald intervals: ", e$message)
-    .safe_confint(model, level = 1 - alpha)
-  })
-}
-
-#' Bootstrap confidence intervals for boundary cases
-#' @keywords internal
-#' @noRd
-.bootstrap_ci_boundary <- function(model, alpha, n_boot = 1000) {
-
-  # This is a simplified implementation
-  # Full implementation would need proper bootstrap resampling
-  warning("Bootstrap CI not fully implemented. Using Wald intervals.")
-  .safe_confint(model, level = 1 - alpha)
-}
-
-#' Modified Wald intervals with boundary adjustment
-#' @keywords internal
-#' @noRd
-.modified_wald_ci_boundary <- function(model, boundary_info, alpha) {
-
-  # Apply conservative adjustment for boundary cases
-  ci <- .safe_confint(model, level = 1 - alpha)
-
-  # For boundary cases, widen intervals by a factor
-  # This is a heuristic adjustment - more sophisticated methods exist
-  if (boundary_info$boundary_type %in% c("upper_bound", "both_bounds")) {
-    adjustment_factor <- 1.2  # 20% wider
-    width <- ci[, 2] - ci[, 1]
-    center <- (ci[, 2] + ci[, 1]) / 2
-
-    ci[, 1] <- center - adjustment_factor * width / 2
-    ci[, 2] <- center + adjustment_factor * width / 2
-  }
-
-  return(ci)
-}
-
-#' Add boundary information to risk difference results
-#'
-#' @param result Risk difference result tibble
-#' @param model_result Model fitting result from .fit_robust_glm()
-#' @param alpha Significance level
-#'
-#' @return Updated result with boundary information
-#' @keywords internal
-#' @noRd
-.add_boundary_info <- function(result, model_result, alpha = 0.05) {
-
-  if (is.null(model_result$model)) {
-    # No model to check
-    result$on_boundary <- FALSE
-    result$boundary_type <- "no_model"
-    result$boundary_warning <- NULL
+  # Input validation
+  if (!inherits(model, "glm")) {
+    if (verbose) message("Input is not a GLM object")
+    result$boundary_type <- "invalid_model"
     return(result)
   }
 
-  # Detect boundary
-  boundary_info <- .detect_boundary(model_result$model)
-
-  # Add boundary information to result
-  result$on_boundary <- boundary_info$on_boundary
-  result$boundary_type <- boundary_info$boundary_type
-  result$boundary_warning <- boundary_info$warning_message
-
-  # If on boundary, recalculate confidence intervals using robust method
-  if (boundary_info$on_boundary) {
-    robust_ci <- .calculate_boundary_ci(model_result$model, boundary_info, alpha)
-
-    # Update confidence intervals in the result
-    # This would need to be integrated with your existing CI calculation logic
-    # The exact implementation depends on how you want to handle different link functions
+  if (!model$converged) {
+    if (verbose) message("Model did not converge")
+    result$boundary_detected <- TRUE
+    result$boundary_type <- "non_convergence"
+    return(result)
   }
 
+  tryCatch({
+    # Get fitted probabilities safely
+    fitted_probs <- stats::fitted(model)
+
+    if (length(fitted_probs) == 0) {
+      result$boundary_type <- "no_fitted_values"
+      return(result)
+    }
+
+    # Store probability range
+    result$fitted_probabilities_range <- c(min(fitted_probs, na.rm = TRUE),
+                                           max(fitted_probs, na.rm = TRUE))
+
+    # Check for probabilities at or near boundaries [0,1]
+    prob_min <- min(fitted_probs, na.rm = TRUE)
+    prob_max <- max(fitted_probs, na.rm = TRUE)
+
+    # Boundary detection logic
+    boundary_detected <- FALSE
+    boundary_type <- "none"
+    boundary_params <- character(0)
+
+    # Type 1: Probabilities at upper boundary (≥ 1)
+    if (prob_max >= (1 - tolerance)) {
+      boundary_detected <- TRUE
+      if (prob_max >= 1) {
+        boundary_type <- "upper_boundary_exact"
+      } else {
+        boundary_type <- "upper_boundary_near"
+      }
+    }
+
+    # Type 2: Probabilities at lower boundary (≤ 0)
+    if (prob_min <= tolerance) {
+      boundary_detected <- TRUE
+      if (prob_min <= 0) {
+        if (boundary_detected && boundary_type != "none") {
+          boundary_type <- "both_boundaries"
+        } else {
+          boundary_type <- "lower_boundary_exact"
+        }
+      } else {
+        if (boundary_detected && boundary_type != "none") {
+          boundary_type <- "both_boundaries"
+        } else {
+          boundary_type <- "lower_boundary_near"
+        }
+      }
+    }
+
+    # Type 3: Check for separation using model diagnostics
+    separation_detected <- .detect_separation(model, data, verbose)
+
+    if (separation_detected) {
+      boundary_detected <- TRUE
+      if (boundary_type == "none") {
+        boundary_type <- "separation"
+      } else {
+        boundary_type <- paste0(boundary_type, "_with_separation")
+      }
+      result$separation_detected <- TRUE
+    }
+
+    # Type 4: Check coefficient magnitudes (very large coefficients suggest boundary)
+    if (!boundary_detected) {
+      coefs <- stats::coef(model)
+      if (any(abs(coefs) > 10, na.rm = TRUE)) {  # Large coefficient threshold
+        boundary_detected <- TRUE
+        boundary_type <- "large_coefficients"
+        boundary_params <- names(coefs)[abs(coefs) > 10]
+      }
+    }
+
+    # Type 5: Check standard errors (very large SEs suggest boundary issues)
+    if (!boundary_detected) {
+      summary_obj <- summary(model)
+      if (is.matrix(summary_obj$coefficients)) {
+        ses <- summary_obj$coefficients[, "Std. Error"]
+        if (any(ses > 10, na.rm = TRUE)) {  # Large SE threshold
+          boundary_detected <- TRUE
+          boundary_type <- "large_standard_errors"
+          boundary_params <- names(ses)[ses > 10]
+        }
+      }
+    }
+
+    # Update result
+    result$boundary_detected <- boundary_detected
+    result$boundary_type <- boundary_type
+    result$boundary_parameters <- boundary_params
+
+    if (verbose) {
+      message("Boundary detection results:")
+      message("  Boundary detected: ", boundary_detected)
+      message("  Boundary type: ", boundary_type)
+      message("  Probability range: [", round(prob_min, 6), ", ", round(prob_max, 6), "]")
+      if (separation_detected) {
+        message("  Separation detected: TRUE")
+      }
+    }
+
+  }, error = function(e) {
+    if (verbose) message("Error in boundary detection: ", e$message)
+    result$boundary_detected <- TRUE
+    result$boundary_type <- "detection_error"
+    result
+  })
+
   return(result)
+}
+
+#' Detect Complete or Quasi-Separation
+#'
+#' @description
+#' Detects complete or quasi-separation in logistic-type models,
+#' which can cause boundary issues in parameter estimation.
+#'
+#' @param model A fitted GLM object
+#' @param data The data used to fit the model
+#' @param verbose Logical for diagnostic output
+#'
+#' @return Logical indicating if separation was detected
+#'
+#' @keywords internal
+.detect_separation <- function(model, data, verbose = FALSE) {
+
+  tryCatch({
+    # Get model matrix and response
+    X <- stats::model.matrix(model)
+    y <- stats::model.response(stats::model.frame(model))
+
+    if (is.null(X) || is.null(y) || nrow(X) == 0) {
+      return(FALSE)
+    }
+
+    # Check for perfect prediction patterns
+    # This is a simplified check - more sophisticated methods exist
+
+    # Method 1: Check if any linear combination perfectly separates
+    fitted_probs <- stats::fitted(model)
+
+    # Look for patterns where fitted probabilities are very close to 0 or 1
+    extreme_low <- fitted_probs < 1e-10
+    extreme_high <- fitted_probs > (1 - 1e-10)
+
+    if (any(extreme_low) || any(extreme_high)) {
+      if (verbose) {
+        message("Extreme fitted probabilities detected")
+      }
+      return(TRUE)
+    }
+
+    # Method 2: Check coefficient stability by examining condition number
+    if (ncol(X) > 1) {
+      tryCatch({
+        cond_num <- kappa(crossprod(X))
+        if (cond_num > 1e12) {  # Very high condition number suggests near-singularity
+          if (verbose) {
+            message("High condition number detected: ", round(cond_num, 2))
+          }
+          return(TRUE)
+        }
+      }, error = function(e) {
+        # If we can't compute condition number, be conservative
+        return(FALSE)
+      })
+    }
+
+    return(FALSE)
+
+  }, error = function(e) {
+    if (verbose) message("Error in separation detection: ", e$message)
+    return(FALSE)
+  })
+}
+
+#' Get Valid Boundary Types
+#'
+#' @description
+#' Returns the complete list of valid boundary types that can be
+#' returned by the boundary detection function.
+#'
+#' @return Character vector of valid boundary type names
+#'
+#' @export
+get_valid_boundary_types <- function() {
+  c(
+    "none",
+    "upper_boundary_exact",
+    "upper_boundary_near",
+    "lower_boundary_exact",
+    "lower_boundary_near",
+    "both_boundaries",
+    "separation",
+    "upper_boundary_exact_with_separation",
+    "upper_boundary_near_with_separation",
+    "lower_boundary_exact_with_separation",
+    "lower_boundary_near_with_separation",
+    "both_boundaries_with_separation",
+    "large_coefficients",
+    "large_standard_errors",
+    "non_convergence",
+    "invalid_model",
+    "no_fitted_values",
+    "detection_error"
+  )
 }

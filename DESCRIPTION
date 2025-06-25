@@ -1,7 +1,7 @@
 Package: riskdiff
-Title: Risk Difference Estimation with Multiple Link Functions
-Version: 0.2.0
-Date: 2025-05-30  # or current date
+Title: Risk Difference Estimation with Multiple Link Functions and Inverse Probability of Treatment Weighting
+Version: 0.2.1
+Date: 2025-06-25
 Authors@R: 
     person("John D.", "Murphy", , "jackmurphy2351@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-7714-9976", "MPH, PhD"))
@@ -34,13 +34,13 @@ Imports:
     rlang,
     scales,
     stringr,
-    stats
+    stats,
+    ggplot2
 Suggests: 
     kableExtra,
     testthat (>= 3.0.0),
     knitr,
     rmarkdown,
-    ggplot2,
     covr
 Config/testthat/edition: 3
 URL: https://github.com/jackmurphy2351/riskdiff

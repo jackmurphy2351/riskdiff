@@ -4,12 +4,14 @@
 \alias{print.riskdiff_result}
 \title{Print method for riskdiff_result objects}
 \usage{
-\method{print}{riskdiff_result}(x, show_boundary = TRUE, ...)
+\method{print}{riskdiff_result}(x, show_boundary = TRUE, show_quality = TRUE, ...)
 }
 \arguments{
 \item{x}{A riskdiff_result object from calc_risk_diff()}
 
-\item{show_boundary}{Logical, whether to show boundary information when available (default: TRUE)}
+\item{show_boundary}{Logical indicating whether to show boundary case details (default: TRUE)}
+
+\item{show_quality}{Logical indicating whether to show quality indicators (default: TRUE)}
 
 \item{...}{Additional arguments passed to print methods}
 }
@@ -19,15 +21,15 @@ for its side effect of printing formatted results to the console.
 }
 \description{
 Prints risk difference results in a formatted, readable way showing
-key statistics including risk differences, confidence intervals, and
-model types used. Version 0.2.0+ includes boundary case detection.
+key statistics including risk differences, confidence intervals, model
+types used, and enhanced boundary case diagnostics for v0.2.1+.
 }
 \examples{
 data(cachar_sample)
-result <- calc_risk_diff(cachar_sample, "abnormal_screen", "smoking")
+result <- calc_risk_diff(cachar_sample, "abnormal_screen", "areca_nut")
 print(result)
 
-# Show boundary information if available
-print(result, show_boundary = TRUE)
+# Suppress boundary details for cleaner output
+print(result, show_boundary = FALSE)
 
 }

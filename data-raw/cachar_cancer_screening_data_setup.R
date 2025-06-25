@@ -197,10 +197,10 @@ tobacco_combo <- with(cachar_sample,
                       table(paste(areca_nut, tobacco_chewing, smoking, sep = "+"), head_neck_abnormal))
 print(round(prop.table(tobacco_combo, 1) * 100, 1)[1:4,])  # Show top combinations
 
-cat("\n✓ Synthetic dataset created successfully!")
-cat("\n✓ Preserves authentic epidemiological patterns")
-cat("\n✓ No privacy or ethical concerns")
-cat("\n✓ Ready for use in riskdiff package examples")
+cat(paste0(.safe_check()), "Synthetic dataset created successfully!")
+cat(paste0(.safe_check()), "Preserves authentic epidemiological patterns")
+cat(paste0(.safe_check()), "No privacy or ethical concerns")
+cat(paste0(.safe_check()), "Ready for use in riskdiff package examples")
 
 # Save the dataset (uncomment when ready to save)
 # save(cachar_sample, file = "data/cachar_sample.rda", compress = "bzip2")

@@ -4,7 +4,7 @@
 \name{riskdiff-package}
 \alias{riskdiff}
 \alias{riskdiff-package}
-\title{riskdiff: Risk Difference Estimation with Multiple Link Functions}
+\title{riskdiff: Risk Difference Estimation with Multiple Link Functions and Inverse Probability of Treatment Weighting}
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 

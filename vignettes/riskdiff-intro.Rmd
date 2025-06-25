@@ -174,31 +174,54 @@ This shows separate risk differences for urban and rural areas, which might refl
 A picture is worth a thousand p-values:
 
 ```{r visualise stratified results}
-# Create a forest plot of risk differences
-plot_data <- rd_stratified %>%
-  mutate(
-    label = paste0(residence, "\n(n=", n_obs, ")"),
-    rd_percent = rd * 100,
-    ci_lower_percent = ci_lower * 100,
-    ci_upper_percent = ci_upper * 100
+
+# Stratified analysis by residence
+rd_stratified <- calc_risk_diff(
+  data = cachar_sample,
+  outcome = "abnormal_screen",
+  exposure = "areca_nut",
+  strata = "residence"
+)
+
+print(rd_stratified)
+
+# Check if estimates are stable enough for visualization
+rd_summary <- rd_stratified %>%
+  summarise(
+    n_valid = sum(!is.na(rd)),
+    max_ci_width = max((ci_upper - ci_lower) * 100, na.rm = TRUE),
+    .groups = "drop"
   )
 
-ggplot(plot_data, aes(x = rd_percent, y = label)) +
-  geom_point(size = 3) +
-  geom_errorbarh(aes(xmin = ci_lower_percent, xmax = ci_upper_percent), 
-                 height = 0.2) +
-  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.5) +
-  labs(
-    title = "Risk Difference for Cancer by Betel Nut Chewing",
-    subtitle = "Stratified by Urban/Rural Residence",
-    x = "Risk Difference (percentage points)",
-    y = ""
-  ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(face = "bold"),
-    axis.text.y = element_text(size = 11)
+# Only create plot if we have reasonable estimates
+if (rd_summary$n_valid > 0 && rd_summary$max_ci_width < 200) {
+  # Use the fixed forest plot function
+  plot_obj <- create_forest_plot(
+    rd_stratified, 
+    title = "Risk Difference for Cancer by Areca Nut Chewing",
+    max_ci_width = 30
   )
+  
+  if (!is.null(plot_obj)) {
+    print(plot_obj)
+  } else {
+    cat(paste0(riskdiff:::.safe_warning()), "Could not create plot due to unstable estimates.\n")
+  }
+} else {
+  cat(paste0(riskdiff:::.safe_warning()), "Estimates too unstable for meaningful visualization.\n")
+  cat("Consider:\n")
+  cat(paste0(riskdiff:::.safe_bullet()), "Larger sample sizes\n") 
+  cat(paste0(riskdiff:::.safe_bullet()), "Different stratification variables\n")
+  cat(paste0(riskdiff:::.safe_bullet()), "Pooled analysis instead of stratification\n")
+  
+  # Show tabular results instead using the robust summary function
+  formatted_results <- create_summary_table(
+    rd_stratified, 
+    caption = "Risk Differences by Residence"
+  )
+  
+  knitr::kable(formatted_results, caption = "Risk Differences by Residence")
+}
 ```
 
 ### Common Pitfalls and Solutions
@@ -299,11 +322,11 @@ if (!is.na(rd_missing$rd)) {
   cat("Attempted to use n =", rd_missing$n_obs, "complete cases\n")
   cat("Cases lost to missing data: ", nrow(cachar_with_missing) - rd_missing$n_obs, "\n\n")
   
-  cat("📚 LESSON: This demonstrates why missing data can be problematic:\n")
-  cat("   • Listwise deletion can dramatically reduce sample size\n")
-  cat("   • Small samples may cause model convergence failures\n") 
-  cat("   • Consider multiple imputation for better missing data handling\n")
-  cat("   • The riskdiff package gracefully handles these failures\n")
+  cat("LESSON: This demonstrates why missing data can be problematic:\n")
+  cat(paste0(riskdiff:::.safe_bullet()), "Listwise deletion can dramatically reduce sample size\n")
+  cat(paste0(riskdiff:::.safe_bullet()), "Small samples may cause model convergence failures\n") 
+  cat(paste0(riskdiff:::.safe_bullet()), "Consider multiple imputation for better missing data handling\n")
+  cat(paste0(riskdiff:::.safe_bullet()), "The riskdiff package gracefully handles these failures\n")
 }
 ```
 
