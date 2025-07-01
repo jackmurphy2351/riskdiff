@@ -17,15 +17,19 @@ knitr::opts_chunk$set(
 
 <!-- badges: start -->
 
-[![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable) [![R-CMD-check](https://github.com/jackmurphy2351/riskdiff/workflows/R-CMD-check/badge.svg)](https://github.com/jackmurphy2351/riskdiff/actions) [![Codecov test coverage](https://codecov.io/gh/jackmurphy2351/riskdiff/branch/main/graph/badge.svg)](https://app.codecov.io/gh/jackmurphy2351/riskdiff?branch=main) [![CRAN Status](https://img.shields.io/badge/CRAN-Under_Review-orange.svg)] [![R-CMD-check](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml)
+[![CRAN status](https://www.r-pkg.org/badges/version/riskdiff)](https://CRAN.R-project.org/package=riskdiff)
+[![CRAN downloads](https://cranlogs.r-pkg.org/badges/grand-total/riskdiff)](https://CRAN.R-project.org/package=riskdiff)
+[![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable) 
+[![R-CMD-check](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/jackmurphy2351/riskdiff/branch/main/graph/badge.svg)](https://app.codecov.io/gh/jackmurphy2351/riskdiff?branch=main)
 
 <!-- badges: end -->
 
 The **riskdiff** package provides robust methods for calculating risk differences (also known as prevalence differences in cross-sectional studies) using generalized linear models with automatic link function selection and **boundary detection**.
 
-## ✨ New in v0.2.0: Boundary Detection
+## ✨ Now Available on CRAN!
 
-**riskdiff** now includes cutting-edge boundary detection capabilities that identify when maximum likelihood estimates lie at the edge of the parameter space - a common issue with identity link models that other packages ignore.
+**riskdiff** v0.2.1 is now published on CRAN with cutting-edge boundary detection capabilities that identify when maximum likelihood estimates lie at the edge of the parameter space - a common issue with identity link models that other packages ignore.
 
 ## Features
 
@@ -44,9 +48,19 @@ The **riskdiff** package provides robust methods for calculating risk difference
 
 ## Installation
 
-You can install the development version of riskdiff from [GitHub](https://github.com/) with:
+### CRAN (Stable Release)
 
-``` r
+Install the latest stable version from CRAN:
+
+```r
+install.packages("riskdiff")
+```
+
+### Development Version
+
+You can install the development version from [GitHub](https://github.com/) with:
+
+```r
 # install.packages("devtools")
 devtools::install_github("jackmurphy2351/riskdiff")
 ```
@@ -164,7 +178,7 @@ The package uses generalized linear models with different link functions:
 2. **Log link**: Estimates relative risks, transforms to risk differences  
 3. **Logit link**: Estimates odds ratios, transforms to risk differences
 
-**New in v0.2.0**: When models hit parameter space boundaries (common with identity links), the package:
+**Key Innovation**: When models hit parameter space boundaries (common with identity links), the package:
 - 🔍 **Detects boundary cases** automatically
 - ⚠️ **Warns users** about potential inference issues  
 - 🛡️ **Uses robust confidence intervals** when appropriate
@@ -228,7 +242,7 @@ print(rd_90)
 
 ## 📊 Understanding Results
 
-### New Result Columns in v0.2.0
+### Enhanced Result Structure
 
 ```{r result-structure}
 # Examine the enhanced result structure
@@ -236,7 +250,7 @@ data(cachar_sample)
 result <- calc_risk_diff(cachar_sample, "abnormal_screen", "smoking")
 names(result)
 
-# Key new columns:
+# Key columns:
 # - on_boundary: Was a boundary case detected?
 # - boundary_type: What type of boundary?
 # - boundary_warning: Detailed diagnostic message
@@ -282,10 +296,11 @@ Risk differences are particularly valuable when:
 
 This package implements methods based on:
 
-- **Donoghoe & Marschner (2018)** - Robust GLM fitting methods
+- **Donoghoe & Marschner (2018)** - Robust GLM fitting methods for log-binomial models
 - **Marschner & Gillett (2012)** - Boundary detection for log-binomial models
-- **Rothman, Greenland & Lash (2008)** - Epidemiological methods
-- **Modern computational statistics** - Boundary-aware inference
+- **Rothman, Greenland & Lash (2008)** - Modern epidemiological methods
+- **Austin (2011)** - Propensity score methods for causal inference
+- **Hernán & Robins (2020)** - Causal inference methodology
 
 ## Getting Help
 
@@ -293,12 +308,13 @@ This package implements methods based on:
 - 🐛 **Bug reports**: [GitHub Issues](https://github.com/jackmurphy2351/riskdiff/issues)
 - 💡 **Feature requests**: [GitHub Issues](https://github.com/jackmurphy2351/riskdiff/issues)
 - 📧 **Questions**: Use GitHub Discussions
+- 📋 **CRAN page**: [https://CRAN.R-project.org/package=riskdiff](https://CRAN.R-project.org/package=riskdiff)
 
 ## Citation
 
 If you use this package in your research, please cite:
 
-``` r
+```r
 citation("riskdiff")
 ```
 

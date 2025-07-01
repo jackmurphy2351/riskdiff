@@ -1,43 +1,70 @@
----
-output: github_document
----
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-
-
 
 # riskdiff <img src="man/figures/logo.png" align="right" height="139"/>
 
 <!-- badges: start -->
 
-[![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable) [![R-CMD-check](https://github.com/jackmurphy2351/riskdiff/workflows/R-CMD-check/badge.svg)](https://github.com/jackmurphy2351/riskdiff/actions) [![Codecov test coverage](https://codecov.io/gh/jackmurphy2351/riskdiff/branch/main/graph/badge.svg)](https://app.codecov.io/gh/jackmurphy2351/riskdiff?branch=main) [![CRAN Status](https://img.shields.io/badge/CRAN-Under_Review-orange.svg)] [![R-CMD-check](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml)
+[![CRAN
+status](https://www.r-pkg.org/badges/version/riskdiff)](https://CRAN.R-project.org/package=riskdiff)
+[![CRAN
+downloads](https://cranlogs.r-pkg.org/badges/grand-total/riskdiff)](https://CRAN.R-project.org/package=riskdiff)
+[![Lifecycle:
+stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
+[![R-CMD-check](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml)
+[![Codecov test
+coverage](https://codecov.io/gh/jackmurphy2351/riskdiff/branch/main/graph/badge.svg)](https://app.codecov.io/gh/jackmurphy2351/riskdiff?branch=main)
 
 <!-- badges: end -->
 
-The **riskdiff** package provides robust methods for calculating risk differences (also known as prevalence differences in cross-sectional studies) using generalized linear models with automatic link function selection and **boundary detection**.
+The **riskdiff** package provides robust methods for calculating risk
+differences (also known as prevalence differences in cross-sectional
+studies) using generalized linear models with automatic link function
+selection and **boundary detection**.
 
-## ✨ New in v0.2.0: Boundary Detection
+## ✨ Now Available on CRAN!
 
-**riskdiff** now includes cutting-edge boundary detection capabilities that identify when maximum likelihood estimates lie at the edge of the parameter space - a common issue with identity link models that other packages ignore.
+**riskdiff** v0.2.1 is now published on CRAN with cutting-edge boundary
+detection capabilities that identify when maximum likelihood estimates
+lie at the edge of the parameter space - a common issue with identity
+link models that other packages ignore.
 
 ## Features
 
-- **🎯 Smart boundary detection**: Automatically detects when GLMs hit parameter constraints
-- **🔧 Robust model fitting**: Tries identity, log, and logit links with graceful fallback  
+- **🎯 Smart boundary detection**: Automatically detects when GLMs hit
+  parameter constraints
+- **🔧 Robust model fitting**: Tries identity, log, and logit links with
+  graceful fallback  
 - **📊 Stratified analysis**: Support for multi-level stratification
-- **📋 Publication-ready output**: Formatted tables and confidence intervals
+- **📋 Publication-ready output**: Formatted tables and confidence
+  intervals
 - **🛡️ Missing data handling**: Graceful handling of incomplete cases
-- **⚙️ Flexible confidence intervals**: Robust methods for boundary cases
-- **📈 Multiple link functions**: Automatic selection with boundary-aware switching
-- **🔍 Transparent diagnostics**: Clear reporting of model methods and boundary issues
+- **⚙️ Flexible confidence intervals**: Robust methods for boundary
+  cases
+- **📈 Multiple link functions**: Automatic selection with
+  boundary-aware switching
+- **🔍 Transparent diagnostics**: Clear reporting of model methods and
+  boundary issues
 
 ## Author
 
-**John D. Murphy, MPH, PhD** ORCID: [0000-0002-7714-9976](https://orcid.org/0000-0002-7714-9976)
+**John D. Murphy, MPH, PhD** ORCID:
+[0000-0002-7714-9976](https://orcid.org/0000-0002-7714-9976)
 
 ## Installation
 
-You can install the development version of riskdiff from [GitHub](https://github.com/) with:
+### CRAN (Stable Release)
+
+Install the latest stable version from CRAN:
+
+``` r
+install.packages("riskdiff")
+```
+
+### Development Version
+
+You can install the development version from
+[GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
@@ -45,7 +72,6 @@ devtools::install_github("jackmurphy2351/riskdiff")
 ```
 
 ## Quick Start
-
 
 ``` r
 library(riskdiff)
@@ -73,7 +99,6 @@ print(result)
 ```
 
 ## 🎯 Boundary Detection in Action
-
 
 ``` r
 # Create data that challenges standard GLM methods
@@ -128,8 +153,8 @@ result <- calc_risk_diff(
 #> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 #> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 #> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm): collapsing
-#> to unique 'x' values
+#> Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm): collapsing to unique
+#> 'x' values
 #> Boundary case detected: separation
 #> Warning: Logit model may have separation issues. Very large coefficient estimates detected.
 #> Note: 1 of 1 analyses had MLE on parameter space boundary. Robust confidence intervals were used.
@@ -178,7 +203,6 @@ if (any(result$on_boundary)) {
 
 ### Basic Usage with Enhanced Diagnostics
 
-
 ``` r
 # Age-adjusted risk difference with boundary detection
 rd_adjusted <- calc_risk_diff(
@@ -202,7 +226,6 @@ print(rd_adjusted)
 ```
 
 ### Stratified Analysis with Boundary Awareness
-
 
 ``` r
 # Stratified by residence with boundary detection
@@ -240,7 +263,6 @@ if (nrow(boundary_summary) > 0) {
 
 ### Table Creation with Boundary Indicators
 
-
 ``` r
 # Create a simple text table with boundary information
 cat(create_simple_table(rd_stratified, "Risk by Smoking Status and Residence"))
@@ -254,7 +276,6 @@ cat(create_simple_table(rd_stratified, "Risk by Smoking Status and Residence"))
 #> ====================================================================================
 ```
 
-
 ``` r
 # Create publication-ready table (requires kableExtra)
 library(kableExtra)
@@ -267,29 +288,31 @@ create_rd_table(rd_stratified,
 
 ### GLM Approach with Boundary Detection
 
-The package uses generalized linear models with different link functions:
+The package uses generalized linear models with different link
+functions:
 
-1. **Identity link** (preferred): Directly estimates risk differences
-2. **Log link**: Estimates relative risks, transforms to risk differences  
-3. **Logit link**: Estimates odds ratios, transforms to risk differences
+1.  **Identity link** (preferred): Directly estimates risk differences
+2.  **Log link**: Estimates relative risks, transforms to risk
+    differences  
+3.  **Logit link**: Estimates odds ratios, transforms to risk
+    differences
 
-**New in v0.2.0**: When models hit parameter space boundaries (common with identity links), the package:
-- 🔍 **Detects boundary cases** automatically
-- ⚠️ **Warns users** about potential inference issues  
-- 🛡️ **Uses robust confidence intervals** when appropriate
-- 📊 **Reports methodology transparently**
+**Key Innovation**: When models hit parameter space boundaries (common
+with identity links), the package: - 🔍 **Detects boundary cases**
+automatically - ⚠️ **Warns users** about potential inference issues  
+- 🛡️ **Uses robust confidence intervals** when appropriate - 📊
+**Reports methodology transparently**
 
 ### Boundary Detection Types
 
 - **Upper bound**: Fitted probabilities near 1 (risk saturation)
-- **Lower bound**: Fitted probabilities near 0 (risk floor) 
+- **Lower bound**: Fitted probabilities near 0 (risk floor)
 - **Separation**: Complete/quasi-separation in logistic models
 - **Both bounds**: Multiple boundary issues detected
 
 ## Advanced Features
 
 ### Boundary Method Control
-
 
 ``` r
 # Force specific boundary handling
@@ -310,7 +333,6 @@ table(rd_conservative$ci_method)
 
 ### Link Function Selection with Boundary Awareness
 
-
 ``` r
 # Force a specific link function
 rd_logit <- calc_risk_diff(
@@ -329,7 +351,6 @@ cat("Boundary detected:", rd_logit$on_boundary, "\n")
 ```
 
 ### Confidence Intervals with Robust Methods
-
 
 ``` r
 # 90% confidence intervals with boundary detection
@@ -356,8 +377,7 @@ print(rd_90)
 
 ## 📊 Understanding Results
 
-### New Result Columns in v0.2.0
-
+### Enhanced Result Structure
 
 ``` r
 # Examine the enhanced result structure
@@ -368,7 +388,7 @@ names(result)
 #>  [1] "exposure_var"  "rd"            "ci_lower"      "ci_upper"      "p_value"      
 #>  [6] "model_type"    "on_boundary"   "boundary_type" "ci_method"     "n_obs"
 
-# Key new columns:
+# Key columns:
 # - on_boundary: Was a boundary case detected?
 # - boundary_type: What type of boundary?
 # - boundary_warning: Detailed diagnostic message
@@ -379,11 +399,10 @@ names(result)
 
 The package includes a realistic simulated cancer screening dataset:
 
-
 ``` r
 data(cachar_sample)
 str(cachar_sample)
-#> 'data.frame':	2500 obs. of  12 variables:
+#> 'data.frame':    2500 obs. of  12 variables:
 #>  $ id                : int  1 2 3 4 5 6 7 8 9 10 ...
 #>  $ age               : int  53 25 18 28 51 25 56 20 58 18 ...
 #>  $ sex               : Factor w/ 2 levels "male","female": 2 1 2 2 1 2 1 1 1 1 ...
@@ -418,14 +437,14 @@ Risk differences are particularly valuable when:
 
 - **Policy decisions**: You need the absolute impact size
 - **Clinical practice**: Communicating real-world effect sizes
-- **Common outcomes**: When outcome prevalence > 10%
+- **Common outcomes**: When outcome prevalence \> 10%
 - **Causal inference**: For intervention planning
 - **Public health**: When relative measures can mislead
 
 ## Comparison with Other Measures
 
 | Measure | Interpretation | Best When | riskdiff Advantage |
-|---------|---------------|-----------|-------------------|
+|----|----|----|----|
 | **Risk Difference** | Absolute change in risk | Common outcomes, policy | **Boundary detection** |
 | Risk Ratio | Relative change in risk | Rare outcomes | Standard methods only |
 | Odds Ratio | Change in odds | Case-control studies | Standard methods only |
@@ -434,17 +453,23 @@ Risk differences are particularly valuable when:
 
 This package implements methods based on:
 
-- **Donoghoe & Marschner (2018)** - Robust GLM fitting methods
-- **Marschner & Gillett (2012)** - Boundary detection for log-binomial models
-- **Rothman, Greenland & Lash (2008)** - Epidemiological methods
-- **Modern computational statistics** - Boundary-aware inference
+- **Donoghoe & Marschner (2018)** - Robust GLM fitting methods for
+  log-binomial models
+- **Marschner & Gillett (2012)** - Boundary detection for log-binomial
+  models
+- **Rothman, Greenland & Lash (2008)** - Modern epidemiological methods
+- **Austin (2011)** - Propensity score methods for causal inference
+- **Hernán & Robins (2020)** - Causal inference methodology
 
 ## Getting Help
 
 - 📖 **Vignettes**: `browseVignettes("riskdiff")`
-- 🐛 **Bug reports**: [GitHub Issues](https://github.com/jackmurphy2351/riskdiff/issues)
-- 💡 **Feature requests**: [GitHub Issues](https://github.com/jackmurphy2351/riskdiff/issues)
+- 🐛 **Bug reports**: [GitHub
+  Issues](https://github.com/jackmurphy2351/riskdiff/issues)
+- 💡 **Feature requests**: [GitHub
+  Issues](https://github.com/jackmurphy2351/riskdiff/issues)
 - 📧 **Questions**: Use GitHub Discussions
+- 📋 **CRAN page**: <https://CRAN.R-project.org/package=riskdiff>
 
 ## Citation
 
@@ -456,7 +481,8 @@ citation("riskdiff")
 
 ## Related Packages
 
-- **epitools**: Basic epidemiological calculations (no boundary detection)
+- **epitools**: Basic epidemiological calculations (no boundary
+  detection)
 - **epi**: Extended epidemiological functions (no boundary detection)
 - **fmsb**: Medical statistics and epidemiology (no boundary detection)
 - **Epi**: Statistical analysis in epidemiology (no boundary detection)
@@ -465,4 +491,7 @@ citation("riskdiff")
 
 ## Code of Conduct
 
-Please note that the riskdiff project is released with a [Contributor Code of Conduct](https://contributor-covenant.org/version/2/1/CODE_OF_CONDUCT.html). By contributing to this project, you agree to abide by its terms.
+Please note that the riskdiff project is released with a [Contributor
+Code of
+Conduct](https://contributor-covenant.org/version/2/1/CODE_OF_CONDUCT.html).
+By contributing to this project, you agree to abide by its terms.
