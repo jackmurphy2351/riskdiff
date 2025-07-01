@@ -351,7 +351,7 @@ result <- calc_risk_diff(
 #### Interpretation Guide
 
 | Risk Difference | Interpretation | Public Health Meaning |
-|------------------------|------------------------|------------------------|
+|----|----|----|
 | 0.05 (5%) | 5 percentage point increase | 50 extra cases per 1,000 screened |
 | 0.01 (1%) | 1 percentage point increase | 10 extra cases per 1,000 screened |
 | -0.03 (-3%) | 3 percentage point decrease | 30 fewer cases per 1,000 screened |

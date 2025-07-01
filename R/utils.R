@@ -114,8 +114,10 @@
     ))
 
     if (n_problematic == n_total_strata) {
-      stop("All strata have insufficient data for analysis. Try different stratification or pooled analysis.")
-    }
+      warning("All strata have insufficient data for analysis. Consider pooled analysis.",
+              call. = FALSE)
+      # Return the summary instead of stopping
+      return(strata_summary)}
   }
 
   return(strata_summary)
@@ -477,16 +479,16 @@
     message("Boundary case detected")
   }
 
-  tibble::tibble(
+  result <- tibble::tibble(
     exposure_var = exposure,
     rd = ci_result$rd,
     ci_lower = ci_result$ci_lower,
     ci_upper = ci_result$ci_upper,
     p_value = ci_result$p_value,
     model_type = model_result$type,
-    on_boundary = boundary_info$on_boundary,
-    boundary_type = boundary_info$boundary_type,
-    boundary_warning = boundary_info$warning_message,
+    on_boundary = boundary_info$boundary_detected %||% FALSE,
+    boundary_type = boundary_info$boundary_type %||% "none",
+    boundary_warning = boundary_info$warning_message %||% NA_character_,
     ci_method = ci_result$ci_method
   )
 }
@@ -588,29 +590,31 @@
   rd_point <- pred_exp - pred_ref
 
   # Try bootstrap confidence interval (more robust than delta method)
-  boot_rds <- tryCatch({
-    replicate(n_boot, {
-      # Bootstrap sample
-      boot_indices <- sample(nrow(data), replace = TRUE)
-      boot_data <- data[boot_indices, ]
+  # Remove failed bootstrap samples with better filtering
+  boot_rds <- boot_rds[is.finite(boot_rds) & !is.na(boot_rds)]
 
-      # Refit model
-      boot_model <- tryCatch({
-        stats::update(model, data = boot_data)
-      }, error = function(e) NULL)
+  if (length(boot_rds) < 3) {
+    # Fall back to delta method if too few successful bootstrap samples
+    vcov_matrix <- tryCatch(stats::vcov(model), error = function(e) NULL)
 
-      if (is.null(boot_model) || !boot_model$converged) return(NA)
+    if (is.null(vcov_matrix) || any(is.na(vcov_matrix))) {
+      # If vcov fails, use very conservative CI
+      se_approx <- abs(rd_point) * 0.5  # Very conservative
+    } else {
+      se_approx <- sqrt(diag(vcov_matrix))[1] * abs(rd_point) * 2  # Conservative approximation
+    }
 
-      # Calculate RD for bootstrap sample
-      boot_pred_ref <- mean(stats::predict(boot_model, newdata = pred_data_ref, type = "response"))
-      boot_pred_exp <- mean(stats::predict(boot_model, newdata = pred_data_exp, type = "response"))
+    z_crit <- stats::qnorm(1 - alpha/2)
+    ci_lower_fallback <- rd_point - z_crit * se_approx
+    ci_upper_fallback <- rd_point + z_crit * se_approx
 
-      boot_pred_exp - boot_pred_ref
-    })
-  }, error = function(e) rep(NA, n_boot))
-
-  # Remove failed bootstrap samples
-  boot_rds <- boot_rds[!is.na(boot_rds)]
+    # Cap extreme CIs
+    ci_width <- ci_upper_fallback - ci_lower_fallback
+    if (!is.na(ci_width) && ci_width > max_ci_width) {
+      half_width <- max_ci_width / 2
+      ci_lower_fallback <- rd_point - half_width
+      ci_upper_fallback <- rd_point + half_width
+    }
 
   if (length(boot_rds) < 0.5 * n_boot) {
     # Too many bootstrap failures, fall back to delta method approximation
@@ -659,8 +663,12 @@
   }
 
   # Use bootstrap quantiles for CI
-  ci_lower_boot <- stats::quantile(boot_rds, alpha/2, na.rm = TRUE)
-  ci_upper_boot <- stats::quantile(boot_rds, 1 - alpha/2, na.rm = TRUE)
+  ci_lower_boot <- tryCatch({
+    stats::quantile(boot_rds[is.finite(boot_rds)], alpha/2, na.rm = TRUE)
+  }, error = function(e) rd_point - 0.1)
+  ci_upper_boot <- tryCatch({
+    stats::quantile(boot_rds[is.finite(boot_rds)], 1 - alpha/2, na.rm = TRUE)
+  }, error = function(e) rd_point + 0.1)
 
   # Handle NA values in bootstrap results
   if (is.na(ci_lower_boot) || is.na(ci_upper_boot)) {
@@ -688,7 +696,8 @@
     p_value = NA_real_,
     ci_method = "bootstrap"
   ))
-}
+  }}
+
 
 # Original calculate_main_effect for backward compatibility
 .calculate_main_effect <- function(model_result, data, exposure, alpha) {

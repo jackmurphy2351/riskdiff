@@ -557,8 +557,8 @@ print.riskdiff_result <- function(x, show_boundary = TRUE, show_quality = TRUE, 
     quality_scores <- dplyr::case_when(
       is.na(x$rd) | x$model_type %in% c("failed", "insufficient_data") ~ "Failed",
       (x$ci_upper - x$ci_lower) > 0.5 ~ "Very Wide CI",
-      x$on_boundary ~ "Boundary",
-      "n_obs" %in% names(x) && x$n_obs < 30 ~ "Small N",
+      "on_boundary" %in% names(x) && any(x$on_boundary, na.rm = TRUE) ~ "Boundary",
+      "n_obs" %in% names(x) && any(x$n_obs < 30, na.rm = TRUE) ~ "Small N",
       (x$ci_upper - x$ci_lower) > 0.25 ~ "Wide CI",
       TRUE ~ "Good"
     )
