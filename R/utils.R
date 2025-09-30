@@ -1305,3 +1305,11 @@
     return("x")
   }
 }
+
+.safe_almost <- function() {
+  if (.supports_unicode()) {
+    return("\u2248")
+  } else {
+    return("~")
+  }
+}

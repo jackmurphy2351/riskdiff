@@ -263,7 +263,7 @@ print.nnt_result <- function(x, digits = 1, ...) {
   }
 
   cat("\nNote: NNT represents number of individuals needed to treat to prevent\n")
-  cat("one additional adverse outcome. 'Undefined' indicates RD ≈ 0.\n")
+  cat("one additional adverse outcome. 'Undefined' indicates RD", .safe_almost(), "0.\n")
 
   invisible(x)
 }
