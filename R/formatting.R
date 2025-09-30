@@ -199,6 +199,75 @@ create_simple_table <- function(results, title = "Risk Difference Results") {
   return(table_obj)
 }
 
+#' Print Method for NNT Results
+#'
+#' @param x An nnt_result object from calc_risk_diff(..., nnt = TRUE)
+#' @param digits Number of decimal places for NNT estimates (default: 1)
+#' @param ... Additional arguments (ignored)
+#'
+#' @export
+print.nnt_result <- function(x, digits = 1, ...) {
+
+  cat("Number Needed to Treat Analysis Results\n")
+  cat("=====================================\n\n")
+
+  alpha <- attr(x, "alpha") %||% 0.05
+  conf_level <- (1 - alpha) * 100
+  cat("Confidence level:", conf_level, "%\n")
+  cat("Number of comparisons:", nrow(x), "\n\n")
+
+  # Format NNT values with appropriate handling of Inf
+  format_nnt <- function(value, digits) {
+    if (is.infinite(value)) {
+      return("Undefined")
+    } else if (value > 9999) {
+      return(">9999")
+    } else {
+      return(sprintf(paste0("%.", digits, "f"), value))
+    }
+  }
+
+  # Create formatted output similar to risk difference print method
+  output_df <- data.frame(
+    Exposure = x$exposure_var,
+    NNT = sapply(x$rd, format_nnt, digits = digits),
+    CI = paste0("(",
+                sapply(x$ci_lower, format_nnt, digits = digits),
+                ", ",
+                sapply(x$ci_upper, format_nnt, digits = digits),
+                ")"),
+    P_value = ifelse(is.na(x$p_value),
+                     .safe_em_dash(),
+                     ifelse(x$p_value < 0.001, "<0.001",
+                            sprintf("%.3f", x$p_value))),
+    Model = x$model_type,
+    stringsAsFactors = FALSE
+  )
+
+  # Add stratification columns if present
+  standard_cols <- c("exposure_var", "rd", "ci_lower", "ci_upper", "p_value",
+                     "model_type", "n_obs", "on_boundary", "boundary_type", "ci_method")
+  strata_cols <- setdiff(names(x), standard_cols)
+
+  if (length(strata_cols) > 0) {
+    for (col in strata_cols) {
+      output_df[[stringr::str_to_title(col)]] <- x[[col]]
+    }
+  }
+
+  print(output_df, row.names = FALSE)
+
+  # Add boundary warnings if present
+  if (any(x$on_boundary, na.rm = TRUE)) {
+    cat("\n", .safe_warning(), " Boundary cases detected. Interpret confidence intervals cautiously.\n")
+  }
+
+  cat("\nNote: NNT represents number of individuals needed to treat to prevent\n")
+  cat("one additional adverse outcome. 'Undefined' indicates RD ≈ 0.\n")
+
+  invisible(x)
+}
+
 #' Create Forest Plot for Risk Difference Results
 #'
 #' @description

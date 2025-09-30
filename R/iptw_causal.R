@@ -10,6 +10,7 @@
 #' @param outcome Character string naming the binary outcome variable
 #' @param treatment Character string naming the binary treatment variable
 #' @param covariates Character vector of covariate names for propensity score model
+#' @param nnt Logical indicating whether to return Number Needed to Treat instead of risk difference (default: FALSE)
 #' @param iptw_weights Optional vector of pre-calculated IPTW weights
 #' @param weight_type Type of weights if calculating: "ATE", "ATT", or "ATC" (default: "ATE")
 #' @param ps_method Method for propensity score estimation (default: "logistic")
@@ -24,9 +25,9 @@
 #' A tibble of class "riskdiff_iptw_result" containing:
 #' \describe{
 #'   \item{treatment_var}{Character. Name of treatment variable}
-#'   \item{rd_iptw}{Numeric. IPTW-standardized risk difference}
-#'   \item{ci_lower}{Numeric. Lower confidence interval bound}
-#'   \item{ci_upper}{Numeric. Upper confidence interval bound}
+#'   \item{rd_iptw}{Numeric. IPTW-standardized risk difference OR Number Needed to Treat if nnt=TRUE}
+#'   \item{ci_lower}{Numeric. Lower confidence interval bound (RD scale or NNT scale)}
+#'   \item{ci_upper}{Numeric. Upper confidence interval bound (RD scale or NNT scale)}
 #'   \item{p_value}{Numeric. P-value for test of null hypothesis}
 #'   \item{weight_type}{Character. Type of weights used}
 #'   \item{effective_n}{Numeric. Effective sample size}
@@ -55,6 +56,14 @@
 #' 2. **Positivity**: All subjects have non-zero probability of receiving either treatment
 #' 3. **Correct model specification**: Propensity score model is correctly specified
 #'
+#' ## Number Needed to Treat (NNT)
+#'
+#' When \code{nnt = TRUE}, results are transformed to causal Number Needed to Treat.
+#' This represents the number of individuals who need to receive treatment to prevent
+#' one additional adverse outcome in the target population (defined by weight_type).
+#' NNT calculations preserve the causal interpretation of IPTW estimates under the
+#' assumptions of exchangeability, positivity, and consistency.
+#'
 #' @examples
 #' data(cachar_sample)
 #'
@@ -79,11 +88,35 @@
 #' )
 #' print(rd_att)
 #'
+#' # Calculate causal NNT using IPTW
+#' nnt_iptw <- calc_risk_diff_iptw(
+#'   data = cachar_sample,
+#'   outcome = "abnormal_screen",
+#'   treatment = "areca_nut",
+#'   covariates = c("age", "sex", "residence", "smoking"),
+#'   nnt = TRUE
+#' )
+#' print(nnt_iptw)
+#'
+#' # ATT-specific NNT with bootstrap CI
+#' nnt_att <- calc_risk_diff_iptw(
+#'   data = cachar_sample,
+#'   outcome = "abnormal_screen",
+#'   treatment = "areca_nut",
+#'   covariates = c("age", "sex", "residence"),
+#'   weight_type = "ATT",
+#'   bootstrap_ci = TRUE,
+#'   boot_n = 500,
+#'   nnt = TRUE
+#' )
+#' summary(nnt_att)
+#'
 #' @export
 calc_risk_diff_iptw <- function(data,
                                 outcome,
                                 treatment,
                                 covariates,
+                                nnt = FALSE,
                                 iptw_weights = NULL,
                                 weight_type = "ATE",
                                 ps_method = "logistic",
@@ -181,6 +214,24 @@ calc_risk_diff_iptw <- function(data,
     cat("P-value:", round(rd_result$p_value, 4), "\n")
   }
 
+  # Transform to NNT if requested
+  if (nnt) {
+    if (verbose) {
+      message("Converting IPTW risk differences to causal Number Needed to Treat (NNT)")
+    }
+    result <- .transform_iptw_to_nnt(result)
+
+    # Update class attribute
+    class(result) <- c("nnt_iptw_result", "riskdiff_iptw_result", class(result))
+  }
+
+  # Store function call and parameters
+  attr(result, "call") <- match.call()
+  attr(result, "alpha") <- alpha
+  attr(result, "bootstrap") <- bootstrap_ci
+  if (bootstrap_ci) attr(result, "boot_n") <- boot_n
+  attr(result, "nnt") <- nnt
+
   return(result)
 }
 
@@ -235,6 +286,83 @@ print.riskdiff_iptw_result <- function(x, ...) {
   if (attr(x, "bootstrap") %||% FALSE) {
     cat("\nNote: Confidence intervals based on", attr(x, "boot_n"), "bootstrap replicates\n")
   }
+
+  invisible(x)
+}
+
+#' Print Method for IPTW NNT Results
+#'
+#' @param x An nnt_iptw_result object from calc_risk_diff_iptw(..., nnt = TRUE)
+#' @param digits Number of decimal places for NNT estimates (default: 1)
+#' @param ... Additional arguments (ignored)
+#'
+#' @export
+print.nnt_iptw_result <- function(x, digits = 1, ...) {
+
+  cat("Causal Number Needed to Treat Analysis (IPTW)\n")
+  cat("============================================\n\n")
+
+  alpha <- attr(x, "alpha") %||% 0.05
+  conf_level <- (1 - alpha) * 100
+
+  cat("Treatment:", x$treatment_var, "\n")
+  cat("Estimand:", x$weight_type, "\n")
+  cat("Effective Sample Size:", round(x$effective_n, 1), "\n")
+  cat("Confidence level:", conf_level, "%\n\n")
+
+  # Format NNT values with appropriate handling of Inf
+  format_nnt <- function(value, digits) {
+    if (is.infinite(value)) {
+      return("Undefined")
+    } else if (value > 9999) {
+      return(">9999")
+    } else {
+      return(sprintf(paste0("%.", digits, "f"), value))
+    }
+  }
+
+  # Main results
+  cat("Causal Effects:\n")
+  cat("---------------\n")
+  cat("Number Needed to Treat:", format_nnt(x$rd_iptw, digits), "\n")
+  cat("95% CI: (", format_nnt(x$ci_lower, digits), ", ",
+      format_nnt(x$ci_upper, digits), ")\n", sep = "")
+  cat("P-value:", ifelse(is.na(x$p_value),
+                         .safe_em_dash(),
+                         ifelse(x$p_value < 0.001, "<0.001",
+                                sprintf("%.3f", x$p_value))), "\n\n")
+
+  # Risk estimates
+  cat("Component Risks:\n")
+  cat("----------------\n")
+  cat("Risk in Treated:", scales::percent(x$risk_treated, accuracy = 0.1), "\n")
+  cat("Risk in Control:", scales::percent(x$risk_control, accuracy = 0.1), "\n\n")
+
+  # Bootstrap note if applicable
+  if (attr(x, "bootstrap") %||% FALSE) {
+    cat("Note: Confidence intervals based on", attr(x, "boot_n"), "bootstrap replicates\n")
+  }
+
+  # Interpretation guidance
+  cat("Interpretation:\n")
+  cat("---------------\n")
+  estimand_text <- switch(x$weight_type,
+                          "ATE" = "population",
+                          "ATT" = "treated individuals",
+                          "ATC" = "control individuals",
+                          "the target population"
+  )
+
+  if (is.infinite(x$rd_iptw)) {
+    cat("The causal effect is too small to yield a meaningful NNT.\n")
+  } else if (x$rd_iptw > 9999) {
+    cat("Very large NNT suggests minimal causal benefit in", estimand_text, ".\n")
+  } else {
+    cat("On average,", round(x$rd_iptw), "individuals in", estimand_text,
+        "would need to\nreceive treatment to prevent one additional adverse outcome.\n")
+  }
+
+  cat("\nCausal assumptions: exchangeability, positivity, consistency\n")
 
   invisible(x)
 }

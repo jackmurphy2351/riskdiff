@@ -218,8 +218,16 @@ check_iptw_assumptions <- function(iptw_result,
 #' @export
 summary.riskdiff_iptw_result <- function(object, ...) {
 
-  cat("IPTW Risk Difference Analysis Summary\n")
-  cat("====================================\n\n")
+  # Check if this is an NNT result
+  is_nnt <- inherits(object, "nnt_iptw_result")
+
+  if (is_nnt) {
+    cat("Causal NNT Analysis Summary (IPTW)\n")
+    cat("==================================\n\n")
+  } else {
+    cat("IPTW Risk Difference Analysis Summary\n")
+    cat("====================================\n\n")
+  }
 
   # Basic information
   cat("Treatment Variable:", object$treatment_var, "\n")
@@ -227,11 +235,27 @@ summary.riskdiff_iptw_result <- function(object, ...) {
   cat("Effective Sample Size:", round(object$effective_n, 1), "\n\n")
 
   # Effect estimates
-  cat("Effect Estimates:\n")
-  cat("-----------------\n")
-  cat("Risk in Treated Group:", scales::percent(object$risk_treated, accuracy = 0.1), "\n")
-  cat("Risk in Control Group:", scales::percent(object$risk_control, accuracy = 0.1), "\n")
-  cat("Risk Difference:", scales::percent(object$rd_iptw, accuracy = 0.01), "\n")
+  if (is_nnt) {
+    cat("Effect Estimates:\n")
+    cat("-----------------\n")
+    cat("Risk in Treated Group:", scales::percent(object$risk_treated, accuracy = 0.1), "\n")
+    cat("Risk in Control Group:", scales::percent(object$risk_control, accuracy = 0.1), "\n")
+
+    if (is.infinite(object$rd_iptw)) {
+      cat("Number Needed to Treat: Undefined (very small causal effect)\n")
+    } else if (object$rd_iptw > 9999) {
+      cat("Number Needed to Treat: >9999 (very small causal effect)\n")
+    } else {
+      cat("Number Needed to Treat:", sprintf("%.1f", object$rd_iptw), "\n")
+    }
+  } else {
+    # Original risk difference output
+    cat("Effect Estimates:\n")
+    cat("-----------------\n")
+    cat("Risk in Treated Group:", scales::percent(object$risk_treated, accuracy = 0.1), "\n")
+    cat("Risk in Control Group:", scales::percent(object$risk_control, accuracy = 0.1), "\n")
+    cat("Risk Difference:", scales::percent(object$rd_iptw, accuracy = 0.01), "\n")
+  }
 
   alpha <- attr(object, "alpha") %||% 0.05
   ci_level <- scales::percent(1 - alpha)

@@ -8,6 +8,7 @@ calc_risk_diff(
   data,
   outcome,
   exposure,
+  nnt = FALSE,
   adjust_vars = NULL,
   strata = NULL,
   link = "auto",
@@ -22,6 +23,8 @@ calc_risk_diff(
 \item{outcome}{Character string naming the binary outcome variable (must be 0/1 or logical)}
 
 \item{exposure}{Character string naming the exposure variable of interest}
+
+\item{nnt}{Logical indicating whether to return Number Needed to Treat instead of risk difference (default: FALSE)}
 
 \item{adjust_vars}{Character vector of variables to adjust for (default: NULL)}
 
@@ -39,9 +42,9 @@ calc_risk_diff(
 A tibble of class "riskdiff_result" containing the following columns:
 \describe{
 \item{exposure_var}{Character. Name of exposure variable analyzed}
-\item{rd}{Numeric. Risk difference estimate (proportion scale, e.g. 0.05 = 5 percentage points)}
-\item{ci_lower}{Numeric. Lower bound of confidence interval}
-\item{ci_upper}{Numeric. Upper bound of confidence interval}
+\item{rd}{Numeric. Risk difference estimate OR Number Needed to Treat if nnt=TRUE (see Details)}
+\item{ci_lower}{Numeric. Lower bound of confidence interval (RD scale or NNT scale)}
+\item{ci_upper}{Numeric. Upper bound of confidence interval (RD scale or NNT scale)}
 \item{p_value}{Numeric. P-value for test of null hypothesis (risk difference = 0)}
 \item{model_type}{Character. Link function successfully used ("identity", "log", "logit", or error type)}
 \item{n_obs}{Integer. Number of observations used in analysis}
@@ -68,49 +71,14 @@ similar to approaches described in Donoghoe & Marschner (2018) for relative
 risk regression.
 }
 \details{
-\subsection{New in Version 0.2.1: Enhanced Stability and Quality Validation}{
+\subsection{New in Version 0.2.2: NNT Calculation capability}{
 
-This version adds comprehensive data quality validation to prevent the
-extreme confidence intervals that could occur in stratified analyses:
-\subsection{Enhanced Data Validation:}{
-\itemize{
-\item Pre-analysis checks for stratification feasibility
-\item Detection of small sample sizes within strata
-\item Identification of rare outcomes or unbalanced exposures
-\item Warning for potential separation issues
-}
-}
-
-\subsection{Boundary Detection and Robust Inference:}{
-
-When the MLE is on the boundary, standard asymptotic theory may not apply.
-The function detects and handles:
-\itemize{
-\item \strong{upper_bound}: Fitted probabilities approaching 1
-\item \strong{lower_bound}: Fitted probabilities approaching 0
-\item \strong{separation}: Complete or quasi-perfect separation
-\item \strong{both_bounds}: Mixed boundary issues
-}
-}
-
-\subsection{Robust Confidence Intervals:}{
-
-For boundary cases, implements:
-\itemize{
-\item \strong{Profile likelihood intervals} (preferred when feasible)
-\item \strong{Bootstrap confidence intervals} (robust for complex cases)
-\item \strong{Modified Wald intervals} with boundary adjustments
-}
-}
-
-}
-
-\subsection{Risk Difference Interpretation}{
-
-Risk differences represent absolute changes in probability. A risk difference
-of 0.05 means the exposed group has a 5 percentage point higher risk than
-the unexposed group. This is often more interpretable than relative measures
-(risk ratios, odds ratios) for public health decision-making.
+When \code{nnt = TRUE}, the function returns Number Needed to Treat (NNT) instead of
+risk differences. NNT represents the number of individuals that need to be treated
+to prevent one additional adverse outcome. NNT is calculated as 1/|RD| and confidence
+intervals are transformed using the delta method. NNT is undefined when RD = 0 and
+is reported as Inf when |RD| < 0.001. For harmful exposures (RD > 0), this represents
+Number Needed to Harm (NNH).
 }
 }
 \examples{
@@ -157,6 +125,25 @@ rd_profile <- calc_risk_diff(
   outcome = "abnormal_screen",
   exposure = "areca_nut",
   boundary_method = "profile"
+)
+
+# Calculate Number Needed to Treat instead of risk difference
+data(cachar_sample)
+nnt_result <- calc_risk_diff(
+  data = cachar_sample,
+  outcome = "abnormal_screen",
+  exposure = "smoking",
+  nnt = TRUE
+)
+print(nnt_result)
+
+# NNT with adjustment variables
+nnt_adjusted <- calc_risk_diff(
+  data = cachar_sample,
+  outcome = "abnormal_screen",
+  exposure = "smoking",
+  adjust_vars = "age",
+  nnt = TRUE
 )
 
 }

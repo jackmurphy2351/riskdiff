@@ -173,6 +173,51 @@ cat("ATC: The average causal effect among non-users of areca nut\n")
 cat("Risk Difference:", scales::percent(rd_atc$rd_iptw, accuracy = 0.01), "\n")
 ```
 
+## Causal Number Needed to Treat
+
+For intervention planning, causal NNT estimates are often more actionable than risk differences:
+
+```{r causal-nnt}
+# Calculate causal NNT for population (ATE)
+nnt_ate <- calc_risk_diff_iptw(
+  data = cachar_sample,
+  outcome = "abnormal_screen",
+  treatment = "areca_nut",
+  covariates = c("age", "sex", "residence", "smoking"),
+  weight_type = "ATE",
+  nnt = TRUE
+)
+
+print(nnt_ate)
+```
+
+This tells us that if we could eliminate areca nut use in the population, we would need to intervene on approximately r if(!is.infinite(nnt_ate$rd_iptw)) round(nnt_ate$rd_iptw) else "many" individuals to prevent one abnormal screening result.
+
+### NNT for Different Causal Estimands
+Different weight types give different causal interpretations:
+
+```{r nnt_different weights}
+# Among those who currently use areca nut (ATT)
+nnt_att <- calc_risk_diff_iptw(
+  cachar_sample, "abnormal_screen", "areca_nut",
+  c("age", "sex", "residence", "smoking"),
+  weight_type = "ATT", nnt = TRUE
+)
+
+cat("NNT among current users (ATT):", 
+    if(!is.infinite(nnt_att$rd_iptw)) round(nnt_att$rd_iptw) else "Undefined", "\n")
+
+# Among those who don't currently use areca nut (ATC)  
+nnt_atc <- calc_risk_diff_iptw(
+  cachar_sample, "abnormal_screen", "areca_nut", 
+  c("age", "sex", "residence", "smoking"),
+  weight_type = "ATC", nnt = TRUE
+)
+
+cat("NNT among current non-users (ATC):", 
+    if(!is.infinite(nnt_atc$rd_iptw)) round(nnt_atc$rd_iptw) else "Undefined", "\n")
+```
+
 ## Advanced Options
 
 ### Bootstrap Confidence Intervals

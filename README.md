@@ -1,55 +1,33 @@
-
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 # riskdiff <img src="man/figures/logo.png" align="right" height="139"/>
 
 <!-- badges: start -->
 
-[![CRAN
-status](https://www.r-pkg.org/badges/version/riskdiff)](https://CRAN.R-project.org/package=riskdiff)
-[![CRAN
-downloads](https://cranlogs.r-pkg.org/badges/grand-total/riskdiff)](https://CRAN.R-project.org/package=riskdiff)
-[![Lifecycle:
-stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
-[![R-CMD-check](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml)
-[![Codecov test
-coverage](https://codecov.io/gh/jackmurphy2351/riskdiff/branch/main/graph/badge.svg)](https://app.codecov.io/gh/jackmurphy2351/riskdiff?branch=main)
+[![CRAN status](https://www.r-pkg.org/badges/version/riskdiff)](https://CRAN.R-project.org/package=riskdiff) [![CRAN downloads](https://cranlogs.r-pkg.org/badges/grand-total/riskdiff)](https://CRAN.R-project.org/package=riskdiff) [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable) [![R-CMD-check](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jackmurphy2351/riskdiff/actions/workflows/R-CMD-check.yaml) [![Codecov test coverage](https://codecov.io/gh/jackmurphy2351/riskdiff/branch/main/graph/badge.svg)](https://app.codecov.io/gh/jackmurphy2351/riskdiff?branch=main)
 
 <!-- badges: end -->
 
-The **riskdiff** package provides robust methods for calculating risk
-differences (also known as prevalence differences in cross-sectional
-studies) using generalized linear models with automatic link function
-selection and **boundary detection**.
+The **riskdiff** package provides robust methods for calculating risk differences (also known as prevalence differences in cross-sectional studies) using generalized linear models with automatic link function selection and **boundary detection**.
 
 ## ✨ Now Available on CRAN!
 
-**riskdiff** v0.2.1 is now published on CRAN with cutting-edge boundary
-detection capabilities that identify when maximum likelihood estimates
-lie at the edge of the parameter space - a common issue with identity
-link models that other packages ignore.
+**riskdiff** v0.2.1 is now published on CRAN with cutting-edge boundary detection capabilities that identify when maximum likelihood estimates lie at the edge of the parameter space - a common issue with identity link models that other packages ignore.
 
 ## Features
 
-- **🎯 Smart boundary detection**: Automatically detects when GLMs hit
-  parameter constraints
-- **🔧 Robust model fitting**: Tries identity, log, and logit links with
-  graceful fallback  
-- **📊 Stratified analysis**: Support for multi-level stratification
-- **📋 Publication-ready output**: Formatted tables and confidence
-  intervals
-- **🛡️ Missing data handling**: Graceful handling of incomplete cases
-- **⚙️ Flexible confidence intervals**: Robust methods for boundary
-  cases
-- **📈 Multiple link functions**: Automatic selection with
-  boundary-aware switching
-- **🔍 Transparent diagnostics**: Clear reporting of model methods and
-  boundary issues
+-   **🎯 Smart boundary detection**: Automatically detects when GLMs hit parameter constraints
+-   **🔧 Robust model fitting**: Tries identity, log, and logit links with graceful fallback\
+-   **📊 Stratified analysis**: Support for multi-level stratification
+-   **📋 Publication-ready output**: Formatted tables and confidence intervals
+-   **🛡️ Missing data handling**: Graceful handling of incomplete cases
+-   **⚙️ Flexible confidence intervals**: Robust methods for boundary cases
+-   **📈 Multiple link functions**: Automatic selection with boundary-aware switching
+-   **🔍 Transparent diagnostics**: Clear reporting of model methods and boundary issues
 
 ## Author
 
-**John D. Murphy, MPH, PhD** ORCID:
-[0000-0002-7714-9976](https://orcid.org/0000-0002-7714-9976)
+**John D. Murphy, MPH, PhD** ORCID: [0000-0002-7714-9976](https://orcid.org/0000-0002-7714-9976)
 
 ## Installation
 
@@ -63,8 +41,7 @@ install.packages("riskdiff")
 
 ### Development Version
 
-You can install the development version from
-[GitHub](https://github.com/) with:
+You can install the development version from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
@@ -88,14 +65,16 @@ result <- calc_risk_diff(
 #> Waiting for profiling to be done...
 
 print(result)
-#> Risk Difference Analysis Results (v0.2.0+)
-#> ========================================== 
+#> Risk Difference Analysis Results (v0.2.1) 
+#> ========================================= 
 #> 
 #> Confidence level: 95% 
 #> Number of comparisons: 1 
 #> 
-#>  Exposure Risk Difference          95% CI P-value    Model Boundary CI Method
-#>   smoking          10.68% (5.95%, 15.75%)  <0.001 identity               wald
+#>  Exposure Risk Difference          95% CI P-value    Model    N Boundary
+#>   smoking          10.68% (5.95%, 15.75%)  <0.001 identity 2500         
+#>  Quality
+#>     Good
 ```
 
 ## 🎯 Boundary Detection in Action
@@ -117,6 +96,8 @@ result <- calc_risk_diff(
   adjust_vars = "age",
   verbose = TRUE  # Shows diagnostic information
 )
+#> Warning in doTryCatch(return(expr), name, parentenv, handler): Possible
+#> separation detected. Risk difference estimates may be unstable.
 #> Formula: outcome ~ exposure + age
 #> Sample size: 100
 #> Trying identity link...
@@ -125,67 +106,47 @@ result <- calc_risk_diff(
 #> Trying log link...
 #> log link error: no valid set of coefficients has been found: please supply starting values
 #> Trying logit link...
-#> [Huzzah!]logit link converged
-#> Waiting for profiling to be done...
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-#> Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm): collapsing to unique
-#> 'x' values
-#> Boundary case detected: separation
-#> Warning: Logit model may have separation issues. Very large coefficient estimates detected.
-#> Note: 1 of 1 analyses had MLE on parameter space boundary. Robust confidence intervals were used.
+#> Boundary detection results:
+#>   Boundary detected: TRUE
+#>   Boundary type: upper_boundary_near
+#>   Probability range: [0.17876, 1]
+#> Note: Model converged but MLE is on parameter space boundary.
+#> Boundary type: upper_boundary_near
+#> ✓logit link converged
+#> ⚠ Perfect or quasi-perfect separation detected. Results may be unreliable.
+#> ⚠ Boundary case detected: upper_boundary_near
+#> Using robust CI method: bootstrap
 
 print(result)
-#> Risk Difference Analysis Results (v0.2.0+)
-#> ========================================== 
+#> Risk Difference Analysis Results (v0.2.1) 
+#> ========================================= 
 #> 
 #> Confidence level: 95% 
 #> Number of comparisons: 1 
 #> Boundary cases detected: 1 of 1 
 #> Boundary CI method: auto 
 #> 
-#>  Exposure Risk Difference              95% CI P-value Model          Boundary
-#>  exposure          80.06% (-199.05%, 359.17%)   0.993 logit [Uh oh]separation
-#>          CI Method
-#>  wald_conservative
+#>  Exposure Risk Difference         95% CI P-value Model   N
+#>  exposure          80.06% (0.00%, 0.00%)       — logit 100
+#>               Boundary  Quality
+#>  ⚠ upper_boundary_near Boundary
 #> 
-#> Boundary Case Details:
-#> =====================
-#> Row 1 ( exposure ):  Logit model may have separation issues. Very large coefficient estimates detected. 
+#> ⚠  Boundary Case Details:
+#> ========================= 
+#> Row 1 ( exposure ): Type: upper_boundary_near | CI method: bootstrap 
 #> 
 #> Boundary Type Guide:
-#> - upper_bound: Fitted probabilities near 1
-#> - lower_bound: Fitted probabilities near 0
-#> - separation: Complete/quasi-separation detected
-#> - both_bounds: Probabilities near both 0 and 1
-#> - [Uh oh] indicates robust confidence intervals were used
+#> • upper_bound: Fitted probabilities near 1 (risk saturation)
+#> • lower_bound: Fitted probabilities near 0 (very rare outcomes)
+#> • separation: Complete/quasi-separation detected
+#> • both_bounds: Mixed boundary issues across observations
+#> ⚠  indicates robust confidence intervals were used
 #> 
-#> Note: Standard asymptotic theory may not apply for boundary cases.
+#> Statistical Note:
+#> ================
+#> Standard asymptotic theory may not apply for boundary cases.
 #> Confidence intervals use robust methods when boundary detected.
+#> For failed analyses, consider alternative estimation approaches.
 
 # Check if boundary cases were detected
 if (any(result$on_boundary)) {
@@ -195,8 +156,8 @@ if (any(result$on_boundary)) {
 }
 #> 
 #> 🚨 Boundary case detected! Using robust inference methods.
-#> Boundary type: separation 
-#> CI method: wald_conservative
+#> Boundary type: upper_boundary_near 
+#> CI method: bootstrap
 ```
 
 ## Key Functions
@@ -212,17 +173,16 @@ rd_adjusted <- calc_risk_diff(
   adjust_vars = "age",
   boundary_method = "auto"  # Automatic robust method selection
 )
-#> Waiting for profiling to be done...
 
 print(rd_adjusted)
-#> Risk Difference Analysis Results (v0.2.0+)
-#> ========================================== 
+#> Risk Difference Analysis Results (v0.2.1) 
+#> ========================================= 
 #> 
 #> Confidence level: 95% 
 #> Number of comparisons: 1 
 #> 
-#>  Exposure Risk Difference          95% CI P-value Model Boundary CI Method
-#>   smoking          10.94% (7.57%, 14.32%)  <0.001 logit               wald
+#>  Exposure Risk Difference         95% CI P-value Model    N Boundary Quality
+#>   smoking          10.94% (0.00%, 0.00%)       — logit 2500             Good
 ```
 
 ### Stratified Analysis with Boundary Awareness
@@ -237,20 +197,22 @@ rd_stratified <- calc_risk_diff(
   strata = "residence"
 )
 #> Waiting for profiling to be done...
-#> Waiting for profiling to be done...
-#> Waiting for profiling to be done...
 
 print(rd_stratified)
-#> Risk Difference Analysis Results (v0.2.0+)
-#> ========================================== 
+#> Risk Difference Analysis Results (v0.2.1) 
+#> ========================================= 
 #> 
 #> Confidence level: 95% 
 #> Number of comparisons: 3 
 #> 
-#>  Exposure Risk Difference           95% CI P-value    Model Boundary CI Method
-#>   smoking          11.63%  (7.83%, 15.44%)  <0.001    logit               wald
-#>   smoking           9.99% (-5.89%, 25.87%)   0.218 identity               wald
-#>   smoking          -3.86%  (-9.05%, 1.32%)   0.706      log               wald
+#>  Exposure Risk Difference           95% CI P-value    Model    N Boundary
+#>   smoking          11.63%   (0.00%, 0.00%)       —    logit 2158         
+#>   smoking           9.99% (-5.89%, 25.87%)   0.218 identity  251         
+#>   smoking          -3.86%   (0.00%, 0.00%)       —      log   91         
+#>  Quality
+#>     Good
+#>  Wide CI
+#>     Good
 
 # Summary of boundary cases across strata
 boundary_summary <- rd_stratified[rd_stratified$on_boundary, 
@@ -270,9 +232,9 @@ cat(create_simple_table(rd_stratified, "Risk by Smoking Status and Residence"))
 #> ====================================================================================
 #> Exposure             Risk Diff       95% CI                    P-value    Model     
 #> ====================================================================================
-#> smoking              11.63%          (7.83%, 15.44%)           <0.001     logit     
+#> smoking              11.63%          (0.00%, 0.00%)            NA         logit     
 #> smoking              9.99%           (-5.89%, 25.87%)          0.218      identity  
-#> smoking              -3.86%          (-9.05%, 1.32%)           0.706      log       
+#> smoking              -3.86%          (0.00%, 0.00%)            NA         log       
 #> ====================================================================================
 ```
 
@@ -288,27 +250,21 @@ create_rd_table(rd_stratified,
 
 ### GLM Approach with Boundary Detection
 
-The package uses generalized linear models with different link
-functions:
+The package uses generalized linear models with different link functions:
 
 1.  **Identity link** (preferred): Directly estimates risk differences
-2.  **Log link**: Estimates relative risks, transforms to risk
-    differences  
-3.  **Logit link**: Estimates odds ratios, transforms to risk
-    differences
+2.  **Log link**: Estimates relative risks, transforms to risk differences\
+3.  **Logit link**: Estimates odds ratios, transforms to risk differences
 
-**Key Innovation**: When models hit parameter space boundaries (common
-with identity links), the package: - 🔍 **Detects boundary cases**
-automatically - ⚠️ **Warns users** about potential inference issues  
-- 🛡️ **Uses robust confidence intervals** when appropriate - 📊
-**Reports methodology transparently**
+**Key Innovation**: When models hit parameter space boundaries (common with identity links), the package: - 🔍 **Detects boundary cases** automatically - ⚠️ **Warns users** about potential inference issues\
+- 🛡️ **Uses robust confidence intervals** when appropriate - 📊 **Reports methodology transparently**
 
 ### Boundary Detection Types
 
-- **Upper bound**: Fitted probabilities near 1 (risk saturation)
-- **Lower bound**: Fitted probabilities near 0 (risk floor)
-- **Separation**: Complete/quasi-separation in logistic models
-- **Both bounds**: Multiple boundary issues detected
+-   **Upper bound**: Fitted probabilities near 1 (risk saturation)
+-   **Lower bound**: Fitted probabilities near 0 (risk floor)
+-   **Separation**: Complete/quasi-separation in logistic models
+-   **Both bounds**: Multiple boundary issues detected
 
 ## Advanced Features
 
@@ -327,8 +283,8 @@ rd_conservative <- calc_risk_diff(
 # Check which methods were used
 table(rd_conservative$ci_method)
 #> 
-#> wald 
-#>    1
+#> profile 
+#>       1
 ```
 
 ### Link Function Selection with Boundary Awareness
@@ -341,7 +297,6 @@ rd_logit <- calc_risk_diff(
   "smoking",
   link = "logit"
 )
-#> Waiting for profiling to be done...
 
 # Check which model was used and if boundaries detected
 cat("Model used:", rd_logit$model_type, "\n")
@@ -363,14 +318,16 @@ rd_90 <- calc_risk_diff(
 #> Waiting for profiling to be done...
 
 print(rd_90)
-#> Risk Difference Analysis Results (v0.2.0+)
-#> ========================================== 
+#> Risk Difference Analysis Results (v0.2.1) 
+#> ========================================= 
 #> 
 #> Confidence level: 90% 
 #> Number of comparisons: 1 
 #> 
-#>  Exposure Risk Difference          95% CI P-value    Model Boundary CI Method
-#>   smoking          10.68% (6.68%, 14.91%)  <0.001 identity               wald
+#>  Exposure Risk Difference          95% CI P-value    Model    N Boundary
+#>   smoking          10.68% (6.68%, 14.91%)  <0.001 identity 2500         
+#>  Quality
+#>     Good
 
 # The package automatically uses appropriate CI methods for boundary cases
 ```
@@ -385,8 +342,9 @@ data(cachar_sample)
 result <- calc_risk_diff(cachar_sample, "abnormal_screen", "smoking")
 #> Waiting for profiling to be done...
 names(result)
-#>  [1] "exposure_var"  "rd"            "ci_lower"      "ci_upper"      "p_value"      
-#>  [6] "model_type"    "on_boundary"   "boundary_type" "ci_method"     "n_obs"
+#>  [1] "exposure_var"     "rd"               "ci_lower"         "ci_upper"        
+#>  [5] "p_value"          "model_type"       "on_boundary"      "boundary_type"   
+#>  [9] "boundary_warning" "ci_method"        "n_obs"
 
 # Key columns:
 # - on_boundary: Was a boundary case detected?
@@ -435,11 +393,11 @@ cat("Smoking increases risk of abnormal screening result by",
 
 Risk differences are particularly valuable when:
 
-- **Policy decisions**: You need the absolute impact size
-- **Clinical practice**: Communicating real-world effect sizes
-- **Common outcomes**: When outcome prevalence \> 10%
-- **Causal inference**: For intervention planning
-- **Public health**: When relative measures can mislead
+-   **Policy decisions**: You need the absolute impact size
+-   **Clinical practice**: Communicating real-world effect sizes
+-   **Common outcomes**: When outcome prevalence \> 10%
+-   **Causal inference**: For intervention planning
+-   **Public health**: When relative measures can mislead
 
 ## Comparison with Other Measures
 
@@ -453,23 +411,19 @@ Risk differences are particularly valuable when:
 
 This package implements methods based on:
 
-- **Donoghoe & Marschner (2018)** - Robust GLM fitting methods for
-  log-binomial models
-- **Marschner & Gillett (2012)** - Boundary detection for log-binomial
-  models
-- **Rothman, Greenland & Lash (2008)** - Modern epidemiological methods
-- **Austin (2011)** - Propensity score methods for causal inference
-- **Hernán & Robins (2020)** - Causal inference methodology
+-   **Donoghoe & Marschner (2018)** - Robust GLM fitting methods for log-binomial models
+-   **Marschner & Gillett (2012)** - Boundary detection for log-binomial models
+-   **Rothman, Greenland & Lash (2008)** - Modern epidemiological methods
+-   **Austin (2011)** - Propensity score methods for causal inference
+-   **Hernán & Robins (2020)** - Causal inference methodology
 
 ## Getting Help
 
-- 📖 **Vignettes**: `browseVignettes("riskdiff")`
-- 🐛 **Bug reports**: [GitHub
-  Issues](https://github.com/jackmurphy2351/riskdiff/issues)
-- 💡 **Feature requests**: [GitHub
-  Issues](https://github.com/jackmurphy2351/riskdiff/issues)
-- 📧 **Questions**: Use GitHub Discussions
-- 📋 **CRAN page**: <https://CRAN.R-project.org/package=riskdiff>
+-   📖 **Vignettes**: `browseVignettes("riskdiff")`
+-   🐛 **Bug reports**: [GitHub Issues](https://github.com/jackmurphy2351/riskdiff/issues)
+-   💡 **Feature requests**: [GitHub Issues](https://github.com/jackmurphy2351/riskdiff/issues)
+-   📧 **Questions**: Use GitHub Discussions
+-   📋 **CRAN page**: <https://CRAN.R-project.org/package=riskdiff>
 
 ## Citation
 
@@ -481,17 +435,13 @@ citation("riskdiff")
 
 ## Related Packages
 
-- **epitools**: Basic epidemiological calculations (no boundary
-  detection)
-- **epi**: Extended epidemiological functions (no boundary detection)
-- **fmsb**: Medical statistics and epidemiology (no boundary detection)
-- **Epi**: Statistical analysis in epidemiology (no boundary detection)
+-   **epitools**: Basic epidemiological calculations (no boundary detection)
+-   **epi**: Extended epidemiological functions (no boundary detection)
+-   **fmsb**: Medical statistics and epidemiology (no boundary detection)
+-   **Epi**: Statistical analysis in epidemiology (no boundary detection)
 
 **riskdiff uniquely provides boundary detection for robust inference!**
 
 ## Code of Conduct
 
-Please note that the riskdiff project is released with a [Contributor
-Code of
-Conduct](https://contributor-covenant.org/version/2/1/CODE_OF_CONDUCT.html).
-By contributing to this project, you agree to abide by its terms.
+Please note that the riskdiff project is released with a [Contributor Code of Conduct](https://contributor-covenant.org/version/2/1/CODE_OF_CONDUCT.html). By contributing to this project, you agree to abide by its terms.

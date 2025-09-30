@@ -9,7 +9,8 @@ format_risk_diff(
   digits = 2,
   p_accuracy = 0.001,
   show_ci_method = FALSE,
-  show_quality = TRUE
+  show_quality = FALSE,
+  nnt_digits = 1
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ format_risk_diff(
 \item{show_ci_method}{Logical indicating whether to show CI method in output (default: FALSE)}
 
 \item{show_quality}{Logical indicating whether to add quality indicators (default: TRUE)}
+
+\item{nnt_digits}{Number of decimal places for NNT formatting (default: 1)}
 }
 \value{
 Tibble with additional formatted columns including:

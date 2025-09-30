@@ -296,3 +296,141 @@ test_that("alpha level affects confidence intervals appropriately", {
   expect_true(width_90 < width_95)
   expect_equal(attr(result_90, "alpha"), 0.10)
 })
+
+test_that("calc_risk_diff_iptw with nnt = TRUE returns correct NNT values", {
+  skip_if_not_installed("dplyr")
+
+  # Create test data with known effect
+  data <- create_iptw_test_data(n = 1000)
+
+  # Calculate IPTW NNT
+  suppressWarnings({
+    result_nnt <- calc_risk_diff_iptw(
+      data = data,
+      outcome = "abnormal_screen",
+      treatment = "areca_nut",
+      covariates = c("age", "sex"),
+      nnt = TRUE
+    )
+  })
+
+  # Check object class
+  expect_true(inherits(result_nnt, "nnt_iptw_result"))
+  expect_true(inherits(result_nnt, "riskdiff_iptw_result"))
+
+  # Check that NNT is positive and reasonable
+  if (!is.infinite(result_nnt$rd_iptw)) {
+    expect_true(result_nnt$rd_iptw > 0)
+    expect_true(result_nnt$rd_iptw < 10000)  # Reasonable range
+  }
+})
+
+test_that("IPTW NNT handles edge cases appropriately", {
+  # Test with very small risk difference scenario
+  # Create data where treatment has minimal effect
+  set.seed(789)
+  small_effect_data <- data.frame(
+    outcome = rbinom(2000, 1, 0.05),  # Low baseline risk
+    treatment = factor(rbinom(2000, 1, 0.5)),
+    age = rnorm(2000, 45, 10),
+    sex = factor(sample(c("M", "F"), 2000, replace = TRUE))
+  )
+
+  suppressWarnings({
+    result_small <- calc_risk_diff_iptw(
+      small_effect_data,
+      "outcome",
+      "treatment",
+      c("age", "sex"),
+      nnt = TRUE
+    )
+  })
+
+  # Should handle small effects gracefully
+  expect_true(is.numeric(result_small$rd_iptw))
+  expect_true(!is.na(result_small$rd_iptw))
+})
+
+test_that("IPTW NNT confidence intervals are correctly computed", {
+  data <- create_iptw_test_data()
+
+  suppressWarnings({
+    result_rd <- calc_risk_diff_iptw(data, "abnormal_screen", "areca_nut", c("age", "sex"))
+    result_nnt <- calc_risk_diff_iptw(data, "abnormal_screen", "areca_nut", c("age", "sex"), nnt = TRUE)
+  })
+
+  # Check that NNT CI bounds are reciprocals (with swapping) when finite
+  if (!is.infinite(result_nnt$ci_lower) && !is.infinite(result_nnt$ci_upper) &&
+      !is.infinite(result_rd$ci_lower) && !is.infinite(result_rd$ci_upper)) {
+    expect_equal(result_nnt$ci_lower, 1/abs(result_rd$ci_upper), tolerance = 0.1)
+    expect_equal(result_nnt$ci_upper, 1/abs(result_rd$ci_lower), tolerance = 0.1)
+  }
+})
+
+test_that("IPTW NNT works with different weight types", {
+  data <- create_iptw_test_data()
+
+  # Test ATE, ATT, and ATC
+  weight_types <- c("ATE", "ATT", "ATC")
+
+  for (wt in weight_types) {
+    suppressWarnings({
+      result <- calc_risk_diff_iptw(
+        data,
+        "abnormal_screen",
+        "areca_nut",
+        c("age", "sex"),
+        weight_type = wt,
+        nnt = TRUE
+      )
+    })
+
+    expect_equal(result$weight_type, wt)
+    expect_true(inherits(result, "nnt_iptw_result"))
+  }
+})
+
+test_that("IPTW NNT print methods work correctly", {
+  data <- create_iptw_test_data()
+
+  suppressWarnings({
+    result_nnt <- calc_risk_diff_iptw(
+      data,
+      "abnormal_screen",
+      "areca_nut",
+      c("age", "sex"),
+      nnt = TRUE
+    )
+  })
+
+  # Test print output
+  expect_output(print(result_nnt), "Causal Number Needed to Treat")
+  expect_output(print(result_nnt), "Number Needed to Treat:")
+  expect_output(print(result_nnt), "Interpretation:")
+
+  # Test summary output
+  expect_output(summary(result_nnt), "Causal NNT Analysis Summary")
+})
+
+test_that("IPTW NNT works with bootstrap confidence intervals", {
+  data <- create_iptw_test_data(n = 200)  # Smaller n for faster testing
+
+  suppressWarnings({
+    result_bootstrap <- calc_risk_diff_iptw(
+      data,
+      "abnormal_screen",
+      "areca_nut",
+      c("age", "sex"),
+      bootstrap_ci = TRUE,
+      boot_n = 100,  # Small number for testing
+      nnt = TRUE
+    )
+  })
+
+  expect_true(inherits(result_bootstrap, "nnt_iptw_result"))
+  expect_true(attr(result_bootstrap, "bootstrap"))
+  expect_equal(attr(result_bootstrap, "boot_n"), 100)
+
+  # Check that bootstrap note appears in print
+  expect_output(print(result_bootstrap), "bootstrap replicates")
+})

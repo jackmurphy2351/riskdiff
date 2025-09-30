@@ -14,6 +14,7 @@
 #' @param data A data frame containing all necessary variables
 #' @param outcome Character string naming the binary outcome variable (must be 0/1 or logical)
 #' @param exposure Character string naming the exposure variable of interest
+#' @param nnt Logical indicating whether to return Number Needed to Treat instead of risk difference (default: FALSE)
 #' @param adjust_vars Character vector of variables to adjust for (default: NULL)
 #' @param strata Character vector of stratification variables (default: NULL)
 #' @param link Character string specifying link function: "auto", "identity", "log", or "logit" (default: "auto")
@@ -25,9 +26,9 @@
 #' A tibble of class "riskdiff_result" containing the following columns:
 #' \describe{
 #'   \item{exposure_var}{Character. Name of exposure variable analyzed}
-#'   \item{rd}{Numeric. Risk difference estimate (proportion scale, e.g. 0.05 = 5 percentage points)}
-#'   \item{ci_lower}{Numeric. Lower bound of confidence interval}
-#'   \item{ci_upper}{Numeric. Upper bound of confidence interval}
+#'   \item{rd}{Numeric. Risk difference estimate OR Number Needed to Treat if nnt=TRUE (see Details)}
+#'   \item{ci_lower}{Numeric. Lower bound of confidence interval (RD scale or NNT scale)}
+#'   \item{ci_upper}{Numeric. Upper bound of confidence interval (RD scale or NNT scale)}
 #'   \item{p_value}{Numeric. P-value for test of null hypothesis (risk difference = 0)}
 #'   \item{model_type}{Character. Link function successfully used ("identity", "log", "logit", or error type)}
 #'   \item{n_obs}{Integer. Number of observations used in analysis}
@@ -43,37 +44,14 @@
 #' represents a 5 percentage point difference.
 #'
 #' @details
-#' ## New in Version 0.2.1: Enhanced Stability and Quality Validation
+#' ## New in Version 0.2.2: NNT Calculation capability
 #'
-#' This version adds comprehensive data quality validation to prevent the
-#' extreme confidence intervals that could occur in stratified analyses:
-#'
-#' ### Enhanced Data Validation:
-#' - Pre-analysis checks for stratification feasibility
-#' - Detection of small sample sizes within strata
-#' - Identification of rare outcomes or unbalanced exposures
-#' - Warning for potential separation issues
-#'
-#' ### Boundary Detection and Robust Inference:
-#' When the MLE is on the boundary, standard asymptotic theory may not apply.
-#' The function detects and handles:
-#' - **upper_bound**: Fitted probabilities approaching 1
-#' - **lower_bound**: Fitted probabilities approaching 0
-#' - **separation**: Complete or quasi-perfect separation
-#' - **both_bounds**: Mixed boundary issues
-#'
-#' ### Robust Confidence Intervals:
-#' For boundary cases, implements:
-#' - **Profile likelihood intervals** (preferred when feasible)
-#' - **Bootstrap confidence intervals** (robust for complex cases)
-#' - **Modified Wald intervals** with boundary adjustments
-#'
-#' ## Risk Difference Interpretation
-#'
-#' Risk differences represent absolute changes in probability. A risk difference
-#' of 0.05 means the exposed group has a 5 percentage point higher risk than
-#' the unexposed group. This is often more interpretable than relative measures
-#' (risk ratios, odds ratios) for public health decision-making.
+#' When \code{nnt = TRUE}, the function returns Number Needed to Treat (NNT) instead of
+#' risk differences. NNT represents the number of individuals that need to be treated
+#' to prevent one additional adverse outcome. NNT is calculated as 1/|RD| and confidence
+#' intervals are transformed using the delta method. NNT is undefined when RD = 0 and
+#' is reported as Inf when |RD| < 0.001. For harmful exposures (RD > 0), this represents
+#' Number Needed to Harm (NNH).
 #'
 #' @references
 #' Donoghoe MW, Marschner IC (2018). "logbin: An R Package for Relative Risk
@@ -135,10 +113,30 @@
 #'   boundary_method = "profile"
 #' )
 #'
+#'# Calculate Number Needed to Treat instead of risk difference
+#' data(cachar_sample)
+#' nnt_result <- calc_risk_diff(
+#'   data = cachar_sample,
+#'   outcome = "abnormal_screen",
+#'   exposure = "smoking",
+#'   nnt = TRUE
+#' )
+#' print(nnt_result)
+#'
+#' # NNT with adjustment variables
+#' nnt_adjusted <- calc_risk_diff(
+#'   data = cachar_sample,
+#'   outcome = "abnormal_screen",
+#'   exposure = "smoking",
+#'   adjust_vars = "age",
+#'   nnt = TRUE
+#' )
+#'
 #' @export
 calc_risk_diff <- function(data,
                            outcome,
                            exposure,
+                           nnt = FALSE,
                            adjust_vars = NULL,
                            strata = NULL,
                            link = "auto",
@@ -225,6 +223,22 @@ calc_risk_diff <- function(data,
     }
   }
 
+  # Transform to NNT if requested
+  if (nnt) {
+    if (verbose) {
+      message("Converting risk differences to Number Needed to Treat (NNT)")
+    }
+    results <- .transform_to_nnt(results)
+
+    # Update class attribute
+    class(results) <- c("nnt_result", "riskdiff_result", class(results))
+  }
+
+  # Store function call and parameters
+  attr(results, "call") <- match.call()
+  attr(results, "alpha") <- alpha
+  attr(results, "nnt") <- nnt
+
   return(results)
 }
 
@@ -237,6 +251,7 @@ calc_risk_diff <- function(data,
 #'
 #' @param results Results tibble from calc_risk_diff()
 #' @param digits Number of decimal places for percentages (default: 2)
+#' @param nnt_digits Number of decimal places for NNT formatting (default: 1)
 #' @param p_accuracy Accuracy for p-values (default: 0.001)
 #' @param show_ci_method Logical indicating whether to show CI method in output (default: FALSE)
 #' @param show_quality Logical indicating whether to add quality indicators (default: TRUE)
@@ -270,25 +285,46 @@ format_risk_diff <- function(results,
                              digits = 2,
                              p_accuracy = 0.001,
                              show_ci_method = FALSE,
-                             show_quality = TRUE) {
+                             show_quality = FALSE,
+                             nnt_digits = 1) {  # Add this parameter
 
-  # Input validation
-  if (!inherits(results, "riskdiff_result")) {
-    warning("Input does not appear to be from calc_risk_diff(). Proceeding anyway.")
+  # Check if results are NNT
+  is_nnt <- inherits(results, "nnt_result")
+
+  if (is_nnt) {
+    # NNT-specific formatting
+    results$rd_formatted <- sapply(results$rd, function(x) {
+      if (is.infinite(x)) {
+        "Undefined"
+      } else if (x > 9999) {
+        ">9999"
+      } else {
+        sprintf(paste0("%.", nnt_digits, "f"), x)
+      }
+    })
+
+    results$ci_formatted <- paste0("(",
+                                   sapply(results$ci_lower, function(x) {
+                                     if (is.infinite(x)) "Undefined"
+                                     else if (x > 9999) ">9999"
+                                     else sprintf(paste0("%.", nnt_digits, "f"), x)
+                                   }),
+                                   ", ",
+                                   sapply(results$ci_upper, function(x) {
+                                     if (is.infinite(x)) "Undefined"
+                                     else if (x > 9999) ">9999"
+                                     else sprintf(paste0("%.", nnt_digits, "f"), x)
+                                   }),
+                                   ")")
+  } else {
+    # Original risk difference formatting
+    results$rd_formatted <- sprintf(paste0("%.", digits, "f%%"), results$rd * 100)
+    results$ci_formatted <- sprintf(
+      paste0("(%.", digits, "f%%, %.", digits, "f%%)"),
+      results$ci_lower * 100,
+      results$ci_upper * 100
+    )
   }
-
-  if (nrow(results) == 0) {
-    warning("Empty results provided to format_risk_diff()")
-    return(results)
-  }
-
-  # Core formatting using base R to avoid dependency issues
-  results$rd_formatted <- sprintf(paste0("%.", digits, "f%%"), results$rd * 100)
-  results$ci_formatted <- sprintf(
-    paste0("(%.", digits, "f%%, %.", digits, "f%%)"),
-    results$ci_lower * 100,
-    results$ci_upper * 100
-  )
 
   # Enhanced p-value formatting with robust NA handling
   results$p_value_formatted <- ifelse(

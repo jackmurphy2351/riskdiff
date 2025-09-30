@@ -224,6 +224,22 @@ if (rd_summary$n_valid > 0 && rd_summary$max_ci_width < 200) {
 }
 ```
 
+## Number Needed to Treat (NNT)
+
+For intervention planning and clinical decision-making, Number Needed to Treat can be more intuitive than risk differences:
+
+```{r nnt-example}
+# Calculate NNT for smoking cessation intervention
+nnt_smoking <- calc_risk_diff(
+  cachar_sample,
+  "abnormal_screen", 
+  "smoking",
+  nnt = TRUE
+)
+
+print(nnt_smoking)
+```
+
 ### Common Pitfalls and Solutions
 
 #### 1. Model Convergence Issues
@@ -351,7 +367,7 @@ result <- calc_risk_diff(
 #### Interpretation Guide
 
 | Risk Difference | Interpretation | Public Health Meaning |
-|----|----|----|
+|------------------------|------------------------|------------------------|
 | 0.05 (5%) | 5 percentage point increase | 50 extra cases per 1,000 screened |
 | 0.01 (1%) | 1 percentage point increase | 10 extra cases per 1,000 screened |
 | -0.03 (-3%) | 3 percentage point decrease | 30 fewer cases per 1,000 screened |

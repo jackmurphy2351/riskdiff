@@ -35,4 +35,7 @@ create_boundary_test_data <- function(scenario = "normal") {
          "separation" = {
            # Perfect separation scenario
            exposure_vals <- rep(c("No", "Yes"), each = n/2)
-           outcome_vals <- c(rep(0, n/2
+           outcome_vals <- c(rep(0, n/2), rep(1, n/2))
+         }
+  )
+}

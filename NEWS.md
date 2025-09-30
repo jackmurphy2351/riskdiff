@@ -1,4 +1,62 @@
-# riskdiff 0.2.0
+# riskdiff 0.3.0
+
+## Major New Features: Number Needed to Treat (NNT)
+
+### 🔢 Number Needed to Treat Integration
+
+- **`calc_risk_diff(..., nnt = TRUE)`**: Direct NNT calculation with robust confidence intervals
+- **`calc_risk_diff_iptw(..., nnt = TRUE)`**: Causal NNT estimates using IPTW methodology
+- **Automatic transformation**: Seamless conversion from risk differences using reciprocal method
+- **Boundary handling**: Proper management of undefined NNT when risk differences ≈ 0
+- **Statistical validity**: Confidence intervals transformed using delta method principles
+
+### 📊 Enhanced Output and Formatting
+
+- **`print.nnt_result()`**: Specialized print method for standard NNT results
+- **`print.nnt_iptw_result()`**: Specialized print method for causal NNT results  
+- **Enhanced `format_risk_diff()`**: Support for NNT formatting with appropriate precision
+- **`summary.riskdiff_iptw_result()`**: Updated to handle both RD and NNT presentations
+- **Interpretation guidance**: Automated contextual interpretation in print outputs
+
+### 🧠 Clinical Decision Support
+
+- **Actionable metrics**: NNT provides intuitive "number of patients to treat" interpretation
+- **Causal NNT**: IPTW-based NNT represents true causal effects under exchangeability
+- **Multiple estimands**: ATE, ATT, and ATC all support NNT transformation for targeted interpretation
+- **Public health focus**: Designed specifically for intervention planning and resource allocation
+
+## Enhanced Statistical Methods
+
+### NNT-Specific Methodological Improvements
+
+- **Threshold management**: Automatic handling of clinically meaningless small effect sizes
+- **Infinite value handling**: Graceful management of undefined NNT cases
+- **Bootstrap compatibility**: NNT transformation works seamlessly with bootstrap confidence intervals
+- **Boundary detection integration**: Existing boundary detection system applies to NNT calculations
+
+### Documentation and Examples
+
+- **Comprehensive examples**: Both standard and IPTW NNT examples in all relevant functions
+- **Vignette updates**: Integration into existing analysis workflows
+- **Clinical interpretation**: Guidance on when NNT is more appropriate than risk differences
+- **Causal inference context**: Clear explanation of NNT assumptions under IPTW
+
+## API Consistency
+
+### Backward Compatibility
+- **Zero breaking changes**: All existing code continues to work unchanged
+- **Optional parameter**: `nnt = FALSE` by default maintains existing behavior
+- **Consistent interface**: Same parameter pattern across `calc_risk_diff()` and `calc_risk_diff_iptw()`
+- **Preserved attributes**: All existing result attributes maintained
+
+### Quality Assurance
+- **Comprehensive testing**: Full test suite for NNT functionality across all scenarios
+- **Edge case handling**: Robust behavior with extreme values, small samples, and boundary cases
+- **Statistical validation**: Confidence interval transformations verified against theoretical expectations
+
+---
+
+# riskdiff 0.2.1
 
 ## Major New Features: Causal Inference with IPTW
 
@@ -141,8 +199,6 @@ All causal inference methods implemented according to established best practices
 # riskdiff 0.1.0
 
 ## Initial CRAN Release
-
-[Previous version content remains unchanged...]
 
 ## Development Philosophy
 

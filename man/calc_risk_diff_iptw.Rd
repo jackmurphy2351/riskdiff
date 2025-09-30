@@ -9,6 +9,7 @@ calc_risk_diff_iptw(
   outcome,
   treatment,
   covariates,
+  nnt = FALSE,
   iptw_weights = NULL,
   weight_type = "ATE",
   ps_method = "logistic",
@@ -28,6 +29,8 @@ calc_risk_diff_iptw(
 \item{treatment}{Character string naming the binary treatment variable}
 
 \item{covariates}{Character vector of covariate names for propensity score model}
+
+\item{nnt}{Logical indicating whether to return Number Needed to Treat instead of risk difference (default: FALSE)}
 
 \item{iptw_weights}{Optional vector of pre-calculated IPTW weights}
 
@@ -51,9 +54,9 @@ calc_risk_diff_iptw(
 A tibble of class "riskdiff_iptw_result" containing:
 \describe{
 \item{treatment_var}{Character. Name of treatment variable}
-\item{rd_iptw}{Numeric. IPTW-standardized risk difference}
-\item{ci_lower}{Numeric. Lower confidence interval bound}
-\item{ci_upper}{Numeric. Upper confidence interval bound}
+\item{rd_iptw}{Numeric. IPTW-standardized risk difference OR Number Needed to Treat if nnt=TRUE}
+\item{ci_lower}{Numeric. Lower confidence interval bound (RD scale or NNT scale)}
+\item{ci_upper}{Numeric. Upper confidence interval bound (RD scale or NNT scale)}
 \item{p_value}{Numeric. P-value for test of null hypothesis}
 \item{weight_type}{Character. Type of weights used}
 \item{effective_n}{Numeric. Effective sample size}
@@ -93,6 +96,15 @@ as an alternative that may perform better with small samples.
 \item \strong{Correct model specification}: Propensity score model is correctly specified
 }
 }
+
+\subsection{Number Needed to Treat (NNT)}{
+
+When \code{nnt = TRUE}, results are transformed to causal Number Needed to Treat.
+This represents the number of individuals who need to receive treatment to prevent
+one additional adverse outcome in the target population (defined by weight_type).
+NNT calculations preserve the causal interpretation of IPTW estimates under the
+assumptions of exchangeability, positivity, and consistency.
+}
 }
 \examples{
 data(cachar_sample)
@@ -117,5 +129,28 @@ rd_att <- calc_risk_diff_iptw(
   boot_n = 500
 )
 print(rd_att)
+
+# Calculate causal NNT using IPTW
+nnt_iptw <- calc_risk_diff_iptw(
+  data = cachar_sample,
+  outcome = "abnormal_screen",
+  treatment = "areca_nut",
+  covariates = c("age", "sex", "residence", "smoking"),
+  nnt = TRUE
+)
+print(nnt_iptw)
+
+# ATT-specific NNT with bootstrap CI
+nnt_att <- calc_risk_diff_iptw(
+  data = cachar_sample,
+  outcome = "abnormal_screen",
+  treatment = "areca_nut",
+  covariates = c("age", "sex", "residence"),
+  weight_type = "ATT",
+  bootstrap_ci = TRUE,
+  boot_n = 500,
+  nnt = TRUE
+)
+summary(nnt_att)
 
 }

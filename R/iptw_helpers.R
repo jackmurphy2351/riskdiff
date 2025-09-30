@@ -595,3 +595,68 @@
     boot_estimates = boot_rds
   ))
 }
+
+#' Transform IPTW Risk Difference Results to Number Needed to Treat
+#'
+#' @description
+#' Converts IPTW risk difference estimates and confidence intervals to causal Number
+#' Needed to Treat using the reciprocal transformation with appropriate handling of
+#' boundary cases and effective sample size considerations.
+#'
+#' @param iptw_results A tibble with IPTW risk difference results from calc_risk_diff_iptw
+#' @param nnt_threshold Minimum absolute risk difference for meaningful NNT (default: 0.001)
+#'
+#' @return A tibble with NNT estimates and confidence intervals
+#'
+#' @references
+#' Laupacis A, Sackett DL, Roberts RS (1988). "An assessment of clinically useful
+#' measures of the consequences of treatment." New England Journal of Medicine,
+#' 318(26), 1728-1733. doi:10.1056/NEJM198806303182605
+#'
+#' Hernán MA, Robins JM (2020). "Causal Inference: What If." Chapman & Hall/CRC.
+#'
+#' @keywords internal
+.transform_iptw_to_nnt <- function(iptw_results, nnt_threshold = 0.001) {
+
+  # Input validation
+  if (!"rd_iptw" %in% names(iptw_results)) {
+    stop("Results must contain 'rd_iptw' column", call. = FALSE)
+  }
+
+  # Create copy to avoid modifying original
+  nnt_results <- iptw_results
+
+  # Store original rd_iptw for reference
+  original_rd <- iptw_results$rd_iptw
+
+  # Transform point estimates
+  nnt_results$rd_iptw <- ifelse(
+    abs(original_rd) < nnt_threshold | is.na(original_rd),
+    Inf,  # Undefined NNT for very small or missing RD
+    1 / abs(original_rd)
+  )
+
+  # Transform confidence intervals using reciprocal
+  # Note: CI bounds are swapped because 1/x is a decreasing function
+  ci_lower_nnt <- ifelse(
+    abs(iptw_results$ci_upper) < nnt_threshold | is.na(iptw_results$ci_upper),
+    Inf,
+    1 / abs(iptw_results$ci_upper)
+  )
+
+  ci_upper_nnt <- ifelse(
+    abs(iptw_results$ci_lower) < nnt_threshold | is.na(iptw_results$ci_lower),
+    Inf,
+    1 / abs(iptw_results$ci_lower)
+  )
+
+  nnt_results$ci_lower <- ci_lower_nnt
+  nnt_results$ci_upper <- ci_upper_nnt
+
+  # Add NNT-specific metadata
+  attr(nnt_results, "measure") <- "nnt_iptw"
+  attr(nnt_results, "nnt_threshold") <- nnt_threshold
+  attr(nnt_results, "original_rd") <- original_rd
+
+  return(nnt_results)
+}

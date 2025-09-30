@@ -589,7 +589,81 @@
 
   rd_point <- pred_exp - pred_ref
 
-  # Try bootstrap confidence interval (more robust than delta method)
+  # If no bootstrap requested, use delta method
+  if (n_boot <= 0) {
+    # Fall back to delta method approximation
+    vcov_matrix <- tryCatch(stats::vcov(model), error = function(e) NULL)
+
+    if (is.null(vcov_matrix) || any(is.na(vcov_matrix))) {
+      # If vcov fails, use very conservative CI
+      se_approx <- abs(rd_point) * 0.5  # Very conservative
+    } else {
+      se_approx <- sqrt(diag(vcov_matrix))[1] * abs(rd_point) * 2  # Conservative approximation
+    }
+
+    z_crit <- stats::qnorm(1 - alpha/2)
+
+    ci_lower_raw <- rd_point - z_crit * se_approx
+    ci_upper_raw <- rd_point + z_crit * se_approx
+
+    # Handle NA values before checking width
+    if (is.na(ci_lower_raw) || is.na(ci_upper_raw)) {
+      # Return conservative fixed-width CI if calculation fails
+      half_width <- 0.25  # plus or minus 25 percentage points
+      ci_lower_capped <- rd_point - half_width
+      ci_upper_capped <- rd_point + half_width
+    } else {
+      # Cap extreme CIs to prevent forest plot issues
+      ci_width <- ci_upper_raw - ci_lower_raw
+      if (!is.na(ci_width) && ci_width > max_ci_width) {
+        half_width <- max_ci_width / 2
+        ci_lower_capped <- rd_point - half_width
+        ci_upper_capped <- rd_point + half_width
+        warning(paste0("Confidence interval capped at ", .safe_plusminus(), " "), round(half_width * 100, 1),
+                " percentage points due to extreme width.")
+      } else {
+        ci_lower_capped <- ci_lower_raw
+        ci_upper_capped <- ci_upper_raw
+      }
+    }
+
+    return(list(
+      rd = rd_point,
+      ci_lower = ci_lower_capped,
+      ci_upper = ci_upper_capped,
+      p_value = NA_real_,
+      ci_method = "delta_approx"
+    ))
+  }
+
+  # Bootstrap confidence interval (more robust than delta method)
+  boot_rds <- numeric(n_boot)
+
+  for (i in 1:n_boot) {
+    # Bootstrap sample
+    boot_idx <- sample(nrow(data), replace = TRUE)
+    boot_data <- data[boot_idx, ]
+
+    # Refit model on bootstrap sample
+    tryCatch({
+      boot_model <- update(model, data = boot_data)
+
+      # Calculate RD for bootstrap sample using same prediction approach
+      boot_pred_data_ref <- boot_data
+      boot_pred_data_ref[[exposure]] <- factor(exposure_levels[1], levels = exposure_levels)
+      boot_pred_ref <- mean(stats::predict(boot_model, newdata = boot_pred_data_ref, type = "response"))
+
+      boot_pred_data_exp <- boot_data
+      boot_pred_data_exp[[exposure]] <- factor(exposure_levels[2], levels = exposure_levels)
+      boot_pred_exp <- mean(stats::predict(boot_model, newdata = boot_pred_data_exp, type = "response"))
+
+      boot_rds[i] <- boot_pred_exp - boot_pred_ref
+
+    }, error = function(e) {
+      boot_rds[i] <- NA
+    })
+  }
+
   # Remove failed bootstrap samples with better filtering
   boot_rds <- boot_rds[is.finite(boot_rds) & !is.na(boot_rds)]
 
@@ -615,6 +689,15 @@
       ci_lower_fallback <- rd_point - half_width
       ci_upper_fallback <- rd_point + half_width
     }
+
+    return(list(
+      rd = rd_point,
+      ci_lower = ci_lower_fallback,
+      ci_upper = ci_upper_fallback,
+      p_value = NA_real_,
+      ci_method = "delta_fallback"
+    ))
+  }
 
   if (length(boot_rds) < 0.5 * n_boot) {
     # Too many bootstrap failures, fall back to delta method approximation
@@ -645,7 +728,7 @@
         half_width <- max_ci_width / 2
         ci_lower_capped <- rd_point - half_width
         ci_upper_capped <- rd_point + half_width
-        warning(paste0("Confidence interval capped at ", .safe_plusminus()), round(half_width * 100, 1),
+        warning(paste0("Confidence interval capped at ", .safe_plusminus(), " "), round(half_width * 100, 1),
                 " percentage points due to extreme width.")
       } else {
         ci_lower_capped <- ci_lower_raw
@@ -682,7 +765,7 @@
     half_width <- max_ci_width / 2
     ci_lower_final <- rd_point - half_width
     ci_upper_final <- rd_point + half_width
-    warning(paste0("Bootstrap confidence interval capped at ", .safe_plusminus()), round(half_width * 100, 1),
+    warning(paste0("Bootstrap confidence interval capped at ", .safe_plusminus(), " "), round(half_width * 100, 1),
             " percentage points due to extreme width.")
   } else {
     ci_lower_final <- ci_lower_boot
@@ -696,7 +779,7 @@
     p_value = NA_real_,
     ci_method = "bootstrap"
   ))
-  }}
+}
 
 
 # Original calculate_main_effect for backward compatibility
@@ -1042,6 +1125,67 @@
     colnames(ci) <- c(paste0((alpha/2)*100, " %"), paste0((1-alpha/2)*100, " %"))
     return(ci)
   }
+}
+
+#' Transform Risk Difference Results to Number Needed to Treat
+#'
+#' @description
+#' Converts risk difference estimates and confidence intervals to Number Needed to Treat (NNT)
+#' using the reciprocal transformation with appropriate handling of boundary cases.
+#'
+#' @param rd_results A tibble with risk difference results from calc_risk_diff
+#' @param nnt_threshold Minimum absolute risk difference for meaningful NNT (default: 0.001)
+#'
+#' @return A tibble with NNT estimates and confidence intervals
+#'
+#' @references
+#' Laupacis A, Sackett DL, Roberts RS (1988). "An assessment of clinically useful
+#' measures of the consequences of treatment." New England Journal of Medicine,
+#' 318(26), 1728-1733. doi:10.1056/NEJM198806303182605
+#'
+#' Cook RJ, Sackett DL (1995). "The number needed to treat: a clinically useful
+#' measure of treatment effect." BMJ, 310(6977), 452-454. doi:10.1136/bmj.310.6977.452
+#'
+#' @keywords internal
+.transform_to_nnt <- function(rd_results, nnt_threshold = 0.001) {
+
+  # Input validation
+  if (!"rd" %in% names(rd_results)) {
+    stop("Results must contain 'rd' column", call. = FALSE)
+  }
+
+  # Create copy to avoid modifying original
+  nnt_results <- rd_results
+
+  # Transform point estimates
+  nnt_results$rd <- ifelse(
+    abs(rd_results$rd) < nnt_threshold | is.na(rd_results$rd),
+    Inf,  # Undefined NNT for very small or missing RD
+    1 / abs(rd_results$rd)
+  )
+
+  # Transform confidence intervals using reciprocal
+  # Note: CI bounds are swapped because 1/x is a decreasing function
+  ci_lower_nnt <- ifelse(
+    abs(rd_results$ci_upper) < nnt_threshold | is.na(rd_results$ci_upper),
+    Inf,
+    1 / abs(rd_results$ci_upper)
+  )
+
+  ci_upper_nnt <- ifelse(
+    abs(rd_results$ci_lower) < nnt_threshold | is.na(rd_results$ci_lower),
+    Inf,
+    1 / abs(rd_results$ci_lower)
+  )
+
+  nnt_results$ci_lower <- ci_lower_nnt
+  nnt_results$ci_upper <- ci_upper_nnt
+
+  # Add NNT-specific metadata
+  attr(nnt_results, "measure") <- "nnt"
+  attr(nnt_results, "nnt_threshold") <- nnt_threshold
+
+  return(nnt_results)
 }
 
 # ============================================================================
