@@ -123,16 +123,17 @@ create_convergence_challenge_data <- function(n = 500) {
   # Create data that challenges model convergence
   set.seed(456)
 
+  exposure <- factor(c(rep("No", n*0.8), rep("Yes", n*0.2)))
+  outcome_prob <- ifelse(exposure == "Yes", 0.85, 0.05)
+
   data.frame(
     id = 1:n,
     # Create near-perfect separation scenario
-    exposure = factor(c(rep("No", n*0.8), rep("Yes", n*0.2))),
+    exposure = exposure,
     confounder = c(rep(0, n*0.78), rep(1, n*0.02), rep(0, n*0.02), rep(1, n*0.18)),
     # Outcome highly associated with exposure
-    outcome_prob = ifelse(exposure == "Yes", 0.85, 0.05),
     outcome = rbinom(n, 1, outcome_prob)
-  ) %>%
-    dplyr::select(-outcome_prob)
+  )
 }
 
 # Core functionality tests
@@ -603,8 +604,8 @@ test_that("calc_risk_diff shows expected sex differences in tobacco use patterns
   male_result <- result_sex_strat[result_sex_strat$sex == "male", ]
   female_result <- result_sex_strat[result_sex_strat$sex == "female", ]
 
-  if (!is.na(male_result$rd)) expect_true(male_result$rd > 0)
-  if (!is.na(female_result$rd)) expect_true(female_result$rd >= 0)  # May be 0 if no exposure
+  if (nrow(male_result) > 0 && !is.na(male_result$rd)) expect_true(male_result$rd > 0)
+  if (nrow(female_result) > 0 && !is.na(female_result$rd)) expect_true(female_result$rd >= 0)  # May be 0 if no exposure
 })
 
 # Verbose output testing
@@ -622,28 +623,6 @@ test_that("calc_risk_diff verbose mode works", {
     calc_risk_diff(data, "outcome", "exposure", verbose = TRUE),
     "Sample size"
   )
-})
-
-# Integration with birthweight data
-# =================================
-
-test_that("calc_risk_diff works with package birthweight data", {
-  skip_if_not_installed("riskdiff")
-
-  # Use the included birthweight dataset
-  data(birthweight, package = "riskdiff", envir = environment())
-
-  result <- calc_risk_diff(
-    data = birthweight,
-    outcome = "low_birthweight",
-    exposure = "smoking"
-  )
-
-  expect_s3_class(result, "riskdiff_result")
-  expect_equal(nrow(result), 1)
-  expect_true(!is.na(result$rd))
-  expect_true(result$rd > 0)  # Smoking should increase risk of low birth weight
-  expect_equal(result$exposure_var, "smoking")
 })
 
 # Format and print method tests

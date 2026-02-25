@@ -82,11 +82,15 @@ test_that("boundary detection handles large coefficients", {
 test_that("boundary detection handles large standard errors", {
   # Create data designed to have large SEs WITHOUT boundary issues
   set.seed(789)
-  n <- 50  # Smaller sample for larger SEs
+  n <- 30  # Smaller sample for larger SEs
   test_data_large_se <- data.frame(
     outcome = rbinom(n, 1, 0.5),  # Moderate probability, not near boundaries
     exposure = factor(sample(c("No", "Yes"), n, replace = TRUE, prob = c(0.5, 0.5))),
-    confounder = rnorm(n)
+    confounder = rnorm(n),
+    x1 = rnorm(n),
+    x2 = rnorm(n),
+    x3 = rnorm(n),
+    x4 = rnorm(n)  # Many confounders relative to sample size
   )
 
   # Ensure we're not creating boundary conditions
@@ -97,7 +101,7 @@ test_that("boundary detection handles large standard errors", {
     data = test_data_large_se,
     outcome = "outcome",
     exposure = "exposure",
-    adjust_vars = "confounder"  # Adjustment with small n creates large SEs
+    adjust_vars = c("confounder", "x1", "x2", "x3", "x4")  # Many confounders relative to sample size
   )
 
   # The test should check for EITHER large SEs OR boundary near
