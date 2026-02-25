@@ -117,6 +117,7 @@ create_cachar_inspired_data <- function(n = 1500, seed = 2025) {
     dplyr::select(-abnormal_risk_logit, -abnormal_screen_prob, -hn_risk_logit,
                   -hn_prob, -areca_base_prob, -tobacco_base_prob, -smoking_prob) %>%
     dplyr::arrange(id)
+    )
 }
 
 create_convergence_challenge_data <- function(n = 500) {
