@@ -81,23 +81,21 @@ test_that("boundary detection handles large coefficients", {
 
 test_that("boundary detection handles large standard errors", {
   # Create data designed to have large SEs WITHOUT boundary issues
+  # Use random binary outcome (not alternating) to avoid accidental separation
+  # Use many confounders relative to sample size to generate large SEs
   set.seed(789)
   n <- 50  # Smaller sample for larger SEs
   test_data_large_se <- data.frame(
     outcome = rbinom(n, 1, 0.5),  # Moderate probability, not near boundaries
-    exposure = factor(sample(c("No", "Yes"), n, replace = TRUE, prob = c(0.5, 0.5))),
-    confounder = rnorm(n)
+    exposure = factor(sample(c("No", "Yes"), n, replace = TRUE)),
+    x1 = rnorm(n), x2 = rnorm(n), x3 = rnorm(n), x4 = rnorm(n)
   )
-
-  # Ensure we're not creating boundary conditions
-  # Check baseline risks are away from 0 and 1
-  table(test_data_large_se$outcome, test_data_large_se$exposure)
 
   boundary_large_se <- calc_risk_diff(
     data = test_data_large_se,
     outcome = "outcome",
     exposure = "exposure",
-    adjust_vars = "confounder"  # Adjustment with small n creates large SEs
+    adjust_vars = c("x1", "x2", "x3", "x4")  # Many confounders relative to sample size
   )
 
   # The test should check for EITHER large SEs OR boundary near
@@ -110,14 +108,15 @@ test_that("boundary detection handles large standard errors", {
 
 test_that("boundary detection specifically identifies large standard errors", {
   # Create a scenario where SEs are large but probs are moderate
-  # Use a very small sample with balanced outcome
+  # Use random binary outcome to avoid accidental perfect separation
+  # Use many confounders relative to sample size to reliably generate large SEs
 
   set.seed(999)
-  n <- 20  # Very small sample
+  n <- 50  # Small sample with many confounders
 
   test_data <- data.frame(
-    exposure = factor(rep(c("No", "Yes"), each = n/2)),
-    outcome = rep(c(0, 1, 0, 1, 0, 1, 0, 1, 0, 1), 2),  # Alternating, moderate mean
+    outcome = rbinom(n, 1, 0.5),  # Random binary, not perfect separation
+    exposure = factor(sample(c("No", "Yes"), n, replace = TRUE)),
     x1 = rnorm(n),
     x2 = rnorm(n),
     x3 = rnorm(n),
@@ -134,7 +133,7 @@ test_that("boundary detection specifically identifies large standard errors", {
     )
   })
 
-  # With 20 observations and 6 parameters, we should get large SEs
+  # With 50 observations and 6 parameters, we should get large SEs
   # Check the standard error is actually large
   if (result$boundary_type != "large_standard_errors") {
     # If boundary type is different, check if SE is still large

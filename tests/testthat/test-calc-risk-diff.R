@@ -40,7 +40,7 @@ create_cachar_inspired_data <- function(n = 1500, seed = 2025) {
   ) %>%
     dplyr::mutate(
       # Age structure matching Northeast India patterns
-      age = sample(18:70, n, replace = TRUE,
+      age = sample(18:90, n, replace = TRUE,
                    prob = c(rep(0.8, 22), rep(1.2, 30), rep(0.6, 21))),
 
       # Sex distribution (male predominant in screening studies)
