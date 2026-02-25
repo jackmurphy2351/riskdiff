@@ -130,6 +130,3 @@
 #'
 "cachar_sample"
 
-# Note: The previous "birthweight" dataset has been replaced with "cachar_sample"
-# to provide more authentic and culturally relevant examples for risk difference
-# analysis while maintaining complete ethical compliance through synthetic data.

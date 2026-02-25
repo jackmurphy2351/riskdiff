@@ -624,28 +624,6 @@ test_that("calc_risk_diff verbose mode works", {
   )
 })
 
-# Integration with birthweight data
-# =================================
-
-test_that("calc_risk_diff works with package birthweight data", {
-  skip_if_not_installed("riskdiff")
-
-  # Use the included birthweight dataset
-  data(birthweight, package = "riskdiff", envir = environment())
-
-  result <- calc_risk_diff(
-    data = birthweight,
-    outcome = "low_birthweight",
-    exposure = "smoking"
-  )
-
-  expect_s3_class(result, "riskdiff_result")
-  expect_equal(nrow(result), 1)
-  expect_true(!is.na(result$rd))
-  expect_true(result$rd > 0)  # Smoking should increase risk of low birth weight
-  expect_equal(result$exposure_var, "smoking")
-})
-
 # Format and print method tests
 # =============================
 

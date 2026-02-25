@@ -17,7 +17,6 @@ This is a resubmission addressing all issues identified in the CRAN check result
 
 3. **Documentation Fixes**:
    - Fixed function signature mismatches in examples
-   - Updated all dataset references from `birthweight` to `cachar_sample`
    - Resolved parameter documentation inconsistencies
 
 4. **Dependency Issues Resolved**:
