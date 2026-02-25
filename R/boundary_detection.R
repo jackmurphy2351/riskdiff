@@ -131,13 +131,16 @@
         ses <- summary_obj$coefficients[, "Std. Error"]
         coefs <- stats::coef(model)
 
-        # Check if SE is large relative to coefficient magnitude
+        # Check if SE is large in absolute terms OR large relative to coefficient magnitude
         ratio <- abs(ses) / (abs(coefs) + 0.01)  # Avoid division by zero
 
-        if (any(ratio > 2, na.rm = TRUE)) {  # SE > 2x coefficient suggests instability
+        large_absolute_se <- any(ses > 2.0, na.rm = TRUE)
+        large_relative_se <- any(ratio > 2, na.rm = TRUE) & !all(abs(coefs) < 0.1, na.rm = TRUE)
+
+        if (large_absolute_se || large_relative_se) {
           boundary_detected <- TRUE
           boundary_type <- "large_standard_errors"
-          boundary_params <- names(ses)[ratio > 2]
+          boundary_params <- names(ses)[ses > 2.0 | (ratio > 2 & abs(coefs) >= 0.1)]
         }
       }
     }
