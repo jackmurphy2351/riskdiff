@@ -41,7 +41,7 @@ create_cachar_inspired_data <- function(n = 1500, seed = 2025) {
     dplyr::mutate(
       # Age structure matching Northeast India patterns
       age = sample(18:70, n, replace = TRUE,
-                   prob = c(rep(0.8, 8), rep(1.2, 30), rep(0.6, 15)),
+                   prob = c(rep(0.8, 8), rep(1.2, 30), rep(0.6, 15))),
 
       # Sex distribution (male predominant in screening studies)
       sex = factor(sample(c("male", "female"), n, replace = TRUE,
@@ -117,7 +117,6 @@ create_cachar_inspired_data <- function(n = 1500, seed = 2025) {
     dplyr::select(-abnormal_risk_logit, -abnormal_screen_prob, -hn_risk_logit,
                   -hn_prob, -areca_base_prob, -tobacco_base_prob, -smoking_prob) %>%
     dplyr::arrange(id)
-    )
 }
 
 create_convergence_challenge_data <- function(n = 500) {
