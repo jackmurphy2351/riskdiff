@@ -124,15 +124,20 @@
       }
     }
 
-    # Type 5: Check standard errors (very large SEs suggest boundary issues)
+    # Type 5: Check standard errors relative to coefficients
     if (!boundary_detected) {
       summary_obj <- summary(model)
       if (is.matrix(summary_obj$coefficients)) {
         ses <- summary_obj$coefficients[, "Std. Error"]
-        if (any(ses > 10, na.rm = TRUE)) {  # Large SE threshold
+        coefs <- stats::coef(model)
+
+        # Check if SE is large relative to coefficient magnitude
+        ratio <- abs(ses) / (abs(coefs) + 0.01)  # Avoid division by zero
+
+        if (any(ratio > 2, na.rm = TRUE)) {  # SE > 2x coefficient suggests instability
           boundary_detected <- TRUE
           boundary_type <- "large_standard_errors"
-          boundary_params <- names(ses)[ses > 10]
+          boundary_params <- names(ses)[ratio > 2]
         }
       }
     }
