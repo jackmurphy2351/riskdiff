@@ -2,11 +2,6 @@
 library(testthat)
 library(riskdiff)
 
-# Ensure package is loaded
-if (!isNamespace("riskdiff")) {
-  stop("riskdiff package must be loaded")
-}
-
 test_that("boundary detection covers all edge cases in .detect_boundary", {
   # Test NULL model input
   boundary_null <- riskdiff:::.detect_boundary(NULL, data.frame())
