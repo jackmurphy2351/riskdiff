@@ -3,9 +3,7 @@
 This is a minor release focusing on robust boundary detection and numerical stability.
 
 ## Test environments
-* local macOS Sonoma, R 4.3.2
-* win-builder (devel and release)
-* Ubuntu 22.04.3 LTS (on GitHub Actions), R 4.3.2
+* local macOS Tahoe, R 4.5.2
 
 ## R-hub check results
 * All checks passed on Linux and Windows.
