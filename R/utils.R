@@ -646,7 +646,7 @@
 
     # Refit model on bootstrap sample
     tryCatch({
-      boot_model <- update(model, data = boot_data)
+      boot_model <- stats::update(model, data = boot_data)
 
       # Calculate RD for bootstrap sample using same prediction approach
       boot_pred_data_ref <- boot_data
