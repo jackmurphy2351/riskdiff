@@ -1,9 +1,9 @@
 Package: riskdiff
 Title: Risk Difference Estimation with Multiple Link Functions and Inverse Probability of Treatment Weighting
 Version: 0.3.0
-Date: 2025-07-4
+Date: 2026-02-26
 Authors@R: 
-    person("John D.", "Murphy", , "jackmurphy2351@gmail.com", role = c("aut", "cre"),
+    person("John D.", "Murphy", , "jackdmurphy@protonmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-7714-9976", "MPH, PhD"))
 Description: Calculates risk differences (or prevalence differences for 
     cross-sectional data) and Number Needed to Treat (NNT) using generalized 
