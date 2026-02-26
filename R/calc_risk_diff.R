@@ -164,15 +164,16 @@ calc_risk_diff <- function(data,
     data_grouped <- data_clean %>%
       dplyr::group_by(dplyr::across(dplyr::all_of(strata)))
     groups <- dplyr::group_split(data_grouped)
-    group_labels <- data_grouped %>%
-      dplyr::group_keys() %>%
-      as.list() %>%
-      purrr::transpose()
+
+    # FIX: Preserve factor levels by splitting the keys tibble directly
+    # bypassing purrr::transpose() which coerces epidemiological factors to integers
+    keys_df <- dplyr::group_keys(data_grouped)
+    group_labels <- split(keys_df, seq_len(nrow(keys_df)))
   }
 
   # Analyze each stratum with enhanced boundary detection
   results <- purrr::map2_dfr(groups, group_labels, function(group_data, group_label) {
-    .analyze_stratum(
+    stratum_res <- .analyze_stratum(
       data = group_data,
       outcome = outcome,
       exposure = exposure,
@@ -184,6 +185,27 @@ calc_risk_diff <- function(data,
       boundary_method = boundary_method,
       verbose = verbose
     )
+
+    # FIX: Explicitly enforce the stratification variables on the result row
+    if (!is.null(strata) && !is.null(group_label)) {
+      # Convert the list of labels back to a tibble
+      label_df <- tibble::as_tibble(group_label)
+
+      # Forcefully assign/overwrite the columns to guarantee they exist and are correct.
+      # This bypasses any corrupted placeholders created by .analyze_stratum()
+      for (col in names(label_df)) {
+        stratum_res[[col]] <- label_df[[col]]
+      }
+
+      # Reorder columns so strata are at the front (immediately following exposure_var)
+      # for cleaner reporting
+      all_cols <- names(stratum_res)
+      strata_cols <- names(label_df)
+      other_cols <- setdiff(all_cols, strata_cols)
+      stratum_res <- stratum_res[, c(strata_cols, other_cols)]
+    }
+
+    return(stratum_res)
   })
 
   # Add metadata as attributes
