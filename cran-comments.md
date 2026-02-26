@@ -7,12 +7,12 @@ This is a minor release focusing on robust boundary detection and numerical stab
 * win-builder (devel and release)
 * Ubuntu 22.04.3 LTS (on GitHub Actions), R 4.3.2
 
-## R CMD check results
-There were no ERRORs or WARNINGs.
-
-There was 1 NOTE:
-* Checking non-standard files/directories: 'CRAN-SUBMISSION'
-  (This is an internal submission checklist and can be ignored.)
+## R-hub check results
+* All checks passed on Linux and Windows.
+* Passed on macOS-15 and macOS-arm64.
+* Note: One macOS-13 check failed due to a "configuration not supported" 
+  error in the GitHub Action environment, which appears unrelated to the 
+  package source code.
 
 ### Major Changes:
 * Implemented an enhanced boundary detection algorithm for Risk Difference estimation.
