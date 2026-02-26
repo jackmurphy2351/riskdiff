@@ -574,6 +574,8 @@
 }
 
 # Improved transformation with better confidence intervals, added CI width capping
+#' @importFrom stats update
+#' @noRd
 .transform_to_rd_robust <- function(model, data, exposure, alpha, n_boot = 500, max_ci_width = 1.0) {
 
   exposure_levels <- levels(data[[exposure]])

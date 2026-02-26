@@ -19,7 +19,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: John D. Murphy \email{jackmurphy2351@gmail.com} (\href{https://orcid.org/0000-0002-7714-9976}{ORCID}) (MPH, PhD)
+\strong{Maintainer}: John D. Murphy \email{jackdmurphy@protonmail.com} (\href{https://orcid.org/0000-0002-7714-9976}{ORCID}) (MPH, PhD)
 
 }
 \keyword{internal}
