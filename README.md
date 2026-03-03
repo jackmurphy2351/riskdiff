@@ -65,7 +65,7 @@ result <- calc_risk_diff(
 #> Waiting for profiling to be done...
 
 print(result)
-#> Risk Difference Analysis Results (v0.2.1) 
+#> Risk Difference Analysis Results (v0.3.0) 
 #> ========================================= 
 #> 
 #> Confidence level: 95% 
@@ -118,7 +118,7 @@ result <- calc_risk_diff(
 #> Using robust CI method: bootstrap
 
 print(result)
-#> Risk Difference Analysis Results (v0.2.1) 
+#> Risk Difference Analysis Results (v0.3.0) 
 #> ========================================= 
 #> 
 #> Confidence level: 95% 
@@ -175,7 +175,7 @@ rd_adjusted <- calc_risk_diff(
 )
 
 print(rd_adjusted)
-#> Risk Difference Analysis Results (v0.2.1) 
+#> Risk Difference Analysis Results (v0.3.0) 
 #> ========================================= 
 #> 
 #> Confidence level: 95% 
@@ -199,7 +199,7 @@ rd_stratified <- calc_risk_diff(
 #> Waiting for profiling to be done...
 
 print(rd_stratified)
-#> Risk Difference Analysis Results (v0.2.1) 
+#> Risk Difference Analysis Results (v0.3.0) 
 #> ========================================= 
 #> 
 #> Confidence level: 95% 
@@ -318,7 +318,7 @@ rd_90 <- calc_risk_diff(
 #> Waiting for profiling to be done...
 
 print(rd_90)
-#> Risk Difference Analysis Results (v0.2.1) 
+#> Risk Difference Analysis Results (v0.3.0) 
 #> ========================================= 
 #> 
 #> Confidence level: 90% 
