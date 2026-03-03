@@ -12,7 +12,7 @@ The **riskdiff** package provides robust methods for calculating risk difference
 
 ## ✨ Now Available on CRAN!
 
-**riskdiff** v0.2.1 is now published on CRAN with cutting-edge boundary detection capabilities that identify when maximum likelihood estimates lie at the edge of the parameter space - a common issue with identity link models that other packages ignore.
+**riskdiff** v0.3.0 is now published on CRAN with cutting-edge boundary detection capabilities that identify when maximum likelihood estimates lie at the edge of the parameter space - a common issue with identity link models.
 
 ## Features
 
